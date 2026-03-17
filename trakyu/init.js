@@ -51,6 +51,40 @@ gantt.attachEvent("onColumnResizeEnd", function(index, column, newWidth) {
   return true;
 });
 
+// --- Column visibility persistence ---
+var COL_VISIBILITY_KEY = "trakyu_col_visibility";
+
+// Columns the user can toggle (text is always visible)
+var TOGGLEABLE_COLS = [
+  { name: "start_date", label: "Inicio" },
+  { name: "end_date",   label: "Fin" },
+  { name: "avance",     label: "Avance" },
+  { name: "add",        label: "Agregar" }
+];
+
+function saveColVisibility() {
+  var state = {};
+  gantt.config.columns.forEach(function(col) {
+    if (col.name) state[col.name] = !col.hide;
+  });
+  localStorage.setItem(COL_VISIBILITY_KEY, JSON.stringify(state));
+}
+
+function applyColVisibility() {
+  var saved = localStorage.getItem(COL_VISIBILITY_KEY);
+  if (!saved) return;
+  try {
+    var state = JSON.parse(saved);
+    gantt.config.columns.forEach(function(col) {
+      if (col.name && state[col.name] !== undefined) {
+        col.hide = !state[col.name];
+      }
+    });
+  } catch(e) {
+    localStorage.removeItem(COL_VISIBILITY_KEY);
+  }
+}
+
 // --- Open task state persistence ---
 var OPEN_TASKS_KEY = "trakyu_open_tasks";
 
@@ -203,7 +237,8 @@ function initGantt() {
     console.log("[Gantt] BUBBLE_GANTT_DATA:", window.BUBBLE_GANTT_DATA);
     console.log("[Gantt] BUBBLE_GANTT_LINKS:", window.BUBBLE_GANTT_LINKS);
 
-    applyColWidths(); // restore saved column widths before rendering
+    applyColWidths();      // restore saved column widths before rendering
+    applyColVisibility(); // restore saved column visibility before rendering
 
     try {
         gantt.init("gantt_here");
@@ -263,6 +298,53 @@ function initGantt() {
         zoomGroup.appendChild(zoomFit);
         zoomGroup.appendChild(zoomIn);
         container.appendChild(zoomGroup);
+
+        // Columns toggle button + dropdown
+        var colBtn = document.createElement("button");
+        colBtn.id = "gantt-col-btn";
+        colBtn.textContent = "☰ Columnas";
+        container.appendChild(colBtn);
+
+        var colDropdown = document.createElement("div");
+        colDropdown.id = "gantt-col-dropdown";
+        colDropdown.style.display = "none";
+
+        TOGGLEABLE_COLS.forEach(function(def) {
+            var col = gantt.config.columns.find(function(c) { return c.name === def.name; });
+            if (!col) return;
+
+            var row = document.createElement("label");
+            row.className = "gantt-col-row";
+
+            var checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.checked = !col.hide;
+            checkbox.dataset.colName = def.name;
+
+            checkbox.addEventListener("change", function() {
+                var target = gantt.config.columns.find(function(c) { return c.name === this.dataset.colName; }, this);
+                if (target) {
+                    target.hide = !this.checked;
+                    gantt.render();
+                    saveColVisibility();
+                }
+            });
+
+            row.appendChild(checkbox);
+            row.appendChild(document.createTextNode(" " + def.label));
+            colDropdown.appendChild(row);
+        });
+
+        container.appendChild(colDropdown);
+
+        colBtn.addEventListener("click", function(e) {
+            e.stopPropagation();
+            colDropdown.style.display = colDropdown.style.display === "none" ? "block" : "none";
+        });
+
+        document.addEventListener("click", function() {
+            colDropdown.style.display = "none";
+        });
     })();
 
     // Fall back to raw Bubble globals if data.js hasn't set window.ganttData yet

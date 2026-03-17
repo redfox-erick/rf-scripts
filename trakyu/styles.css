@@ -81,6 +81,48 @@
 .gantt-zoom-btn:first-child { border-left: none; }
 .gantt-zoom-btn:hover { background: #f2f4f7; }
 
+/* Columns toggle button */
+#gantt-col-btn {
+    position: absolute;
+    top: 110px;
+    right: 8px;
+    z-index: 100;
+    background: #fff;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    transition: background 0.15s;
+}
+#gantt-col-btn:hover { background: #f2f4f7; }
+
+/* Columns dropdown */
+#gantt-col-dropdown {
+    position: absolute;
+    top: 140px;
+    right: 8px;
+    z-index: 101;
+    background: #fff;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    padding: 6px 0;
+    min-width: 130px;
+}
+.gantt-col-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.gantt-col-row:hover { background: #f2f4f7; }
+.gantt-col-row input { cursor: pointer; margin: 0; }
+
 #gantt-fullscreen-btn:hover,
 #gantt-scurve-btn:hover {
     background: #f2f4f7;
