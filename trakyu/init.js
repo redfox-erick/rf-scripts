@@ -15,8 +15,8 @@ gantt.addMarker({
 gantt.i18n.setLocale("es");
 gantt.config.grid_width = 920;
 gantt.config.keep_grid_width = false; // allow individual column resizing
-gantt.config.row_height = 40;
-gantt.config.bar_height = 24;
+gantt.config.row_height = 35;
+gantt.config.bar_height = 20;
 gantt.config.date_format = "%Y-%m-%d %H:%i";
 gantt.config.work_time = false;
 

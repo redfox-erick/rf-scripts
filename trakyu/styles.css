@@ -1,3 +1,10 @@
+/* Grid font size */
+.gantt_cell,
+.gantt_tree_content,
+.gantt_grid_head_cell {
+  font-size: 12px;
+}
+
 /* barra */
 .gantt_task_line{
   background: #36ac81;
