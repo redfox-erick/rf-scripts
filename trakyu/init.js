@@ -87,18 +87,7 @@ gantt.config.columns = [
       return porcentaje + "%";
     }
   },
-  {
-    name: "completar",
-    label: "",
-    width: 50,
-    align: "center",
-    resize: true,
-    template: function(task) {
-      if (gantt.hasChild(task.id) || isCompleted(task)) return "";
-      return "<div class='completar-container'><button class='btn-check-circle' onclick='confirmCompletion(\"" + task.id + "\")'>✓</button></div>";
-    }
-  },
-  {name: "add", label:"", width: 40}
+{name: "add", label:"", width: 40}
 ];
 
 gantt.templates.task_text = function(start, end, task){
