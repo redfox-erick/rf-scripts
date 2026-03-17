@@ -1,4 +1,5 @@
 // Configuración inicial del Gantt
+console.log("[Gantt] init.js loaded");
 
 // Fix #1: Single plugins() call — second call was overwriting the first, losing quick_info/tool_tip/marker/export_api
 gantt.plugins({ quick_info: true, tool_tip: true, marker: true, export_api: true, auto_scheduling: true, undo: true });
@@ -104,10 +105,30 @@ gantt.config.undo = true;
 // In Bubble, DOMContentLoaded has already fired by the time HTML elements execute.
 // Check readyState and run immediately if the DOM is already ready.
 function initGantt() {
-    gantt.init("gantt_here");
-    gantt.parse(window.ganttData);
+    console.log("[Gantt] initGantt() called");
+    console.log("[Gantt] document.readyState:", document.readyState);
+    console.log("[Gantt] #gantt_here exists:", !!document.getElementById("gantt_here"));
+    console.log("[Gantt] window.ganttData:", window.ganttData);
+    console.log("[Gantt] BUBBLE_GANTT_DATA:", window.BUBBLE_GANTT_DATA);
+    console.log("[Gantt] BUBBLE_GANTT_LINKS:", window.BUBBLE_GANTT_LINKS);
+
+    try {
+        gantt.init("gantt_here");
+        console.log("[Gantt] gantt.init() OK");
+    } catch(e) {
+        console.error("[Gantt] gantt.init() FAILED:", e);
+        return;
+    }
+
+    try {
+        gantt.parse(window.ganttData);
+        console.log("[Gantt] gantt.parse() OK — tasks loaded:", gantt.getTaskCount());
+    } catch(e) {
+        console.error("[Gantt] gantt.parse() FAILED:", e);
+    }
 }
 
+console.log("[Gantt] readyState at script execution:", document.readyState);
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initGantt);
 } else {
