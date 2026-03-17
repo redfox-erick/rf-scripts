@@ -120,8 +120,15 @@ function initGantt() {
         return;
     }
 
+    // Fall back to raw Bubble globals if data.js hasn't set window.ganttData yet
+    var dataToLoad = window.ganttData || {
+        data: window.BUBBLE_GANTT_DATA || [],
+        links: window.BUBBLE_GANTT_LINKS || []
+    };
+    console.log("[Gantt] dataToLoad:", dataToLoad);
+
     try {
-        gantt.parse(window.ganttData);
+        gantt.parse(dataToLoad);
         console.log("[Gantt] gantt.parse() OK — tasks loaded:", gantt.getTaskCount());
     } catch(e) {
         console.error("[Gantt] gantt.parse() FAILED:", e);
