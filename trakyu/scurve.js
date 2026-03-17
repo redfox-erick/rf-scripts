@@ -167,10 +167,16 @@ window.initSCurve = function() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                legend: { display: true, position: "top" },
+                legend: {
+                    display: true,
+                    position: "top",
+                    labels: { fontSize: 11, boxWidth: 12, padding: 8 }
+                },
                 tooltips: {
                     mode: "index",
                     intersect: false,
+                    bodyFontSize: 11,
+                    titleFontSize: 11,
                     callbacks: {
                         label: function(item, data) {
                             var dataset = data.datasets[item.datasetIndex];
@@ -186,7 +192,8 @@ window.initSCurve = function() {
                         ticks: {
                             maxRotation: 45,
                             autoSkip: true,
-                            maxTicksLimit: 20
+                            maxTicksLimit: 20,
+                            fontSize: 10
                         },
                         gridLines: { color: "rgba(0,0,0,0.05)" }
                     }],
@@ -195,6 +202,7 @@ window.initSCurve = function() {
                             min: 0,
                             max: 100,
                             stepSize: 10,
+                            fontSize: 10,
                             callback: function(v) { return v + "%"; }
                         },
                         gridLines: { color: "rgba(0,0,0,0.05)" }

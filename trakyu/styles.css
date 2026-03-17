@@ -67,7 +67,7 @@
     background: #fff;
     display: flex;
     flex-direction: column;
-    padding: 16px;
+    padding: 8px 12px;
     box-sizing: border-box;
 }
 
@@ -75,12 +75,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: 6px;
     flex-shrink: 0;
 }
 
 #scurve-header span {
-    font-size: 15px;
+    font-size: 12px;
     font-weight: 600;
     color: #1a1a2e;
 }
@@ -88,9 +88,9 @@
 #scurve-close-btn {
     background: #fff;
     border: 1px solid #d0d5dd;
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 13px;
+    border-radius: 5px;
+    padding: 2px 8px;
+    font-size: 11px;
     cursor: pointer;
 }
 #scurve-close-btn:hover {
