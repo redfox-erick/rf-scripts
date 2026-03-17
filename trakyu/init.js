@@ -347,6 +347,32 @@ function initGantt() {
 
         container.appendChild(colDropdown);
 
+        // Open All / Close All button group
+        var treeGroup = document.createElement("div");
+        treeGroup.id = "gantt-tree-group";
+
+        var openAll = document.createElement("button");
+        openAll.className = "gantt-zoom-btn";
+        openAll.textContent = "▶ Todo";
+        openAll.title = "Expandir todo";
+        openAll.addEventListener("click", function() {
+            gantt.eachTask(function(t) { if (gantt.hasChild(t.id)) gantt.open(t.id); });
+            saveOpenTasks();
+        });
+
+        var closeAll = document.createElement("button");
+        closeAll.className = "gantt-zoom-btn";
+        closeAll.textContent = "▼ Todo";
+        closeAll.title = "Contraer todo";
+        closeAll.addEventListener("click", function() {
+            gantt.eachTask(function(t) { if (gantt.hasChild(t.id)) gantt.close(t.id); });
+            saveOpenTasks();
+        });
+
+        treeGroup.appendChild(openAll);
+        treeGroup.appendChild(closeAll);
+        container.appendChild(treeGroup);
+
         colBtn.addEventListener("click", function(e) {
             e.stopPropagation();
             colDropdown.style.display = colDropdown.style.display === "none" ? "block" : "none";

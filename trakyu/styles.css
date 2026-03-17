@@ -87,6 +87,19 @@
 .gantt-zoom-btn:first-child { border-left: none; }
 .gantt-zoom-btn:hover { background: #f2f4f7; }
 
+/* Open All / Close All button group */
+#gantt-tree-group {
+    position: absolute;
+    top: 178px;
+    right: 8px;
+    z-index: 100;
+    display: flex;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
 /* Columns toggle button */
 /* Baseline toggle button */
 #gantt-baseline-btn {
