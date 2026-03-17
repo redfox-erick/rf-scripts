@@ -51,6 +51,38 @@ gantt.attachEvent("onColumnResizeEnd", function(index, column, newWidth) {
   return true;
 });
 
+// --- Open task state persistence ---
+var OPEN_TASKS_KEY = "trakyu_open_tasks";
+
+function saveOpenTasks() {
+  var openIds = [];
+  gantt.eachTask(function(task) {
+    if (task.$open) openIds.push(String(task.id));
+  });
+  localStorage.setItem(OPEN_TASKS_KEY, JSON.stringify(openIds));
+}
+
+function restoreOpenTasks() {
+  var saved = localStorage.getItem(OPEN_TASKS_KEY);
+  if (!saved) return;
+  try {
+    var openIds = JSON.parse(saved);
+    var openSet = {};
+    openIds.forEach(function(id) { openSet[id] = true; });
+    gantt.eachTask(function(task) {
+      if (gantt.hasChild(task.id)) {
+        task.$open = !!openSet[String(task.id)];
+      }
+    });
+    gantt.render();
+  } catch(e) {
+    localStorage.removeItem(OPEN_TASKS_KEY);
+  }
+}
+
+gantt.attachEvent("onTaskOpened", function() { saveOpenTasks(); });
+gantt.attachEvent("onTaskClosed", function() { saveOpenTasks(); });
+
 gantt.config.layout = {
   css: "gantt_container",
   rows: [
@@ -106,8 +138,45 @@ gantt.templates.task_text = function(start, end, task){
     gantt.config.scales = zoomLevels[zoomIndex].scales;
     gantt.render();
   };
-  window.zoom_in = function () { applyZoom(zoomIndex - 1); };
-  window.zoom_out = function () { applyZoom(zoomIndex + 1); };
+  window.zoom_in  = function() { applyZoom(zoomIndex - 1); };
+  window.zoom_out = function() { applyZoom(zoomIndex + 1); };
+
+  window.fitGantt = function() {
+    var range = gantt.getSubtaskDates();
+    if (!range.start_date || !range.end_date) return;
+
+    var timelineEl = gantt.$task;
+    if (!timelineEl) return;
+    var timelineWidth = timelineEl.offsetWidth;
+
+    var durationDays = Math.max(1, Math.ceil((range.end_date - range.start_date) / 86400000));
+
+    // Pick the scale level that fits best
+    var unit, levelIndex;
+    if (durationDays <= 90) {
+      unit = "day"; levelIndex = 0;
+    } else if (durationDays <= 730) {
+      unit = "week"; levelIndex = 1;
+    } else {
+      unit = "month"; levelIndex = 2;
+    }
+
+    // Count how many units span the project
+    var numUnits = 0;
+    var curr = gantt.date[unit + "_start"](new Date(range.start_date));
+    while (curr < range.end_date) {
+      curr = gantt.date.add(curr, 1, unit);
+      numUnits++;
+    }
+
+    var colWidth = Math.max(1, Math.floor(timelineWidth / Math.max(numUnits, 1)));
+    zoomIndex = levelIndex;
+    gantt.config.scales = zoomLevels[levelIndex].scales;
+    gantt.config.min_column_width = colWidth;
+    gantt.render();
+    // Reset min_column_width so manual zoom works normally afterward
+    gantt.config.min_column_width = 80;
+  };
 })();
 
 gantt.templates.timeline_cell_class = function (item, date) {
@@ -182,6 +251,7 @@ function initGantt() {
         console.error("[Gantt] gantt.parse() FAILED:", e);
     }
 
+    restoreOpenTasks();
     if (typeof initSCurve === "function") initSCurve();
 }
 
