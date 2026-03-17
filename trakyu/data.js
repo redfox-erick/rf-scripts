@@ -21,7 +21,7 @@ const validateDates = (tasks) => {
 
 // Validate data before parsing
 gantt.attachEvent("onBeforeParse", function(data) {
-  validateDates(data.data);
+  if (data && data.data) validateDates(data.data);
   return true; // Continue parsing
 });
 
