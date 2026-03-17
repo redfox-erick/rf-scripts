@@ -371,6 +371,7 @@ function initGantt() {
     restoreOpenTasks();
     if (typeof restorePersistedScroll === "function") restorePersistedScroll();
     if (typeof initSCurve === "function") initSCurve();
+    if (typeof initBaselines === "function") initBaselines();
 }
 
 console.log("[Gantt] readyState at script execution:", document.readyState);

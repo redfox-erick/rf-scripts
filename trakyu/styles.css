@@ -82,6 +82,51 @@
 .gantt-zoom-btn:hover { background: #f2f4f7; }
 
 /* Columns toggle button */
+/* Baseline toggle button */
+#gantt-baseline-btn {
+    position: absolute;
+    top: 144px;
+    right: 8px;
+    z-index: 100;
+    background: #fff;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    transition: background 0.15s;
+}
+#gantt-baseline-btn:hover { background: #f2f4f7; }
+#gantt-baseline-btn.active {
+    background: #7c3aed;
+    color: #fff;
+    border-color: #7c3aed;
+}
+
+/* Baseline bar (rendered below the live task bar) */
+.baseline-bar {
+    position: absolute;
+    border-radius: 3px;
+    background: #7c3aed;
+    opacity: 0.7;
+}
+
+/* Ghost task rows (deleted from live, only in baseline) */
+.task-ghost .gantt_task_line {
+    background: #c4b5fd;
+    border-color: #7c3aed;
+    opacity: 0.5;
+    pointer-events: none;
+}
+.gantt_row.task-ghost,
+.gantt_row.gantt_row_task.task-ghost {
+    background: #faf5ff;
+    color: #7c3aed;
+    font-style: italic;
+    opacity: 0.8;
+}
+
 #gantt-col-btn {
     position: absolute;
     top: 110px;
