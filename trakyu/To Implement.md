@@ -44,7 +44,7 @@ Toggle visibility of individual grid columns.
 - Use DHTMLX native approach if possible (set `hide: true` on column + re-render); otherwise implement toggle UI in Bubble.
 - Direct data manipulation → prefer Bubble side if needed.
 
-### 5. ⬜ Dependencias (Finish-to-Start only)
+### 5. ✅ Dependencias (Finish-to-Start only)
 Implement FS task links.
 - Use DHTMLX native link drawing and UI.
 - On link create/update/delete → call `bubble_fn_createLink`, `bubble_fn_updateLink`, `bubble_fn_deleteLink` (same pattern as tasks).

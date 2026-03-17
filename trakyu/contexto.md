@@ -82,6 +82,12 @@ Responsable de:
 3. **Refactorización de lógica de tooltips**:
    - Lógica de tooltips optimizada en `functions.js` para mejorar la legibilidad y reutilización.
 
+8. **Dependencias FS + sin flecha de progreso** ✅:
+   - `drag_progress = false` elimina la flecha de arrastre de progreso en las barras.
+   - `drag_links = true` habilita el dibujo nativo de dependencias.
+   - `onBeforeLinkAdd` rechaza cualquier tipo que no sea FS (tipo "0").
+   - `onAfterLinkAdd/Update/Delete` llaman a `bubble_fn_createLink`, `bubble_fn_updateLink`, `bubble_fn_deleteLink` con payload `{output1: id, output2: source, output3: target, output4: type}`.
+
 7. **Ocultar / mostrar columnas** ✅:
    - Botón flotante "☰ Columnas" abre un dropdown con checkboxes.
    - `text` siempre visible; toggleables: `start_date`, `end_date`, `avance`, `add`.
