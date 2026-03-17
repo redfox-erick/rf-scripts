@@ -92,4 +92,12 @@ gantt.templates.timeline_cell_class = function (item, date) {
 gantt.attachEvent("onBeforeTaskDrag", function(id){ return !isCompleted(gantt.getTask(id)); });
 gantt.attachEvent("onBeforeLightbox", function(id) { return !isCompleted(gantt.getTask(id)); });
 
+// Add the license key for dhtmlX Gantt Pro
+gantt.license = "40762312";
+
+// Enable Pro features
+gantt.config.auto_scheduling = true; // Enables auto-scheduling
+gantt.config.undo = true; // Enables undo/redo functionality
+gantt.plugins({ auto_scheduling: true, undo: true });
+
 gantt.init("gantt_here");

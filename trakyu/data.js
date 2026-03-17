@@ -1,17 +1,9 @@
 // Archivo para manejar los datos dinámicos del Gantt
 
-// Datos de ejemplo (reemplazar con datos dinámicos de Bubble)
+// Esperar que Bubble proporcione los datos dinámicamente
 const ganttData = {
-  data: [
-    // Aquí se deben cargar las tareas dinámicamente desde Bubble
-    // Ejemplo:
-    // { id: 1, text: "Tarea 1", start_date: "2023-03-01", end_date: "2023-03-05", progress: 0.5 },
-  ],
-  links: [
-    // Aquí se deben cargar los enlaces dinámicamente desde Bubble
-    // Ejemplo:
-    // { id: 1, source: 1, target: 2, type: "0" },
-  ]
+  data: window.BUBBLE_GANTT_DATA || [], // Bubble debe definir esta variable global
+  links: window.BUBBLE_GANTT_LINKS || [] // Bubble debe definir esta variable global
 };
 
 gantt.parse(ganttData);
