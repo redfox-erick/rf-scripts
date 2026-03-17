@@ -69,7 +69,7 @@ function saveScrollPosition() {
 }
 
 function restoreScrollPosition(pos) {
-    if (pos) gantt.scrollTo(pos.left, pos.top);
+    if (pos) setTimeout(function() { gantt.scrollTo(pos.left, pos.top); }, 0);
 }
 
 // Tasks

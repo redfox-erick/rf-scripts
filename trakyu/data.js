@@ -27,6 +27,25 @@ gantt.attachEvent("onBeforeParse", function(data) {
 
 // gantt.parse() is now called in init.js after gantt.init() — see Fix #4
 
+// --- Data refresh (#6) ---
+// Bubble calls this via "Run JavaScript" AFTER a workflow completes (create/update/delete task or link).
+// This avoids the race condition where refreshing the HTML element re-parses stale data.
+window.refreshGanttData = function() {
+    var scroll = gantt.getScrollState();
+
+    var fresh = {
+        data:  window.BUBBLE_GANTT_DATA  || [],
+        links: window.BUBBLE_GANTT_LINKS || []
+    };
+
+    gantt.clearAll();
+    gantt.parse(fresh);
+
+    // Restore open task state and scroll position after re-parse
+    if (typeof restoreOpenTasks === "function") restoreOpenTasks();
+    setTimeout(function() { gantt.scrollTo(scroll.x, scroll.y); }, 0);
+};
+
 // Función para manejar la búsqueda dinámica
 // Fix #5: track the event id so we can detach the previous handler before adding a new one
 var _searchEventId = null;
