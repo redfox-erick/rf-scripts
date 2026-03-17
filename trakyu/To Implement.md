@@ -55,7 +55,7 @@ Parent task update (start/end overflow) will be handled 100% on the Bubble backe
 - The Gantt needs a **data refresh mechanism** so that after Bubble updates the parent, the visual is updated without a full page reload.
 - Implement a global `window.refreshGanttData()` function that Bubble can call via `Run JavaScript` to re-fetch `BUBBLE_GANTT_DATA` / `BUBBLE_GANTT_LINKS` and re-parse the Gantt in place.
 
-### 7. ⬜ Baselines
+### 7. ✅ Baselines
 Display task baselines on the Gantt bars (planned vs. actual bar position).
 - DHTMLX Pro has a native baselines extension.
 - **Blocked:** requires additional data fields and workflow changes on the Bubble side before implementation here.
