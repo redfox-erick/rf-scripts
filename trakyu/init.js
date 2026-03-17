@@ -144,6 +144,30 @@ function initGantt() {
         return;
     }
 
+    // --- Fullscreen button ---
+    (function() {
+        var container = document.getElementById("gantt_here");
+        container.style.position = "relative"; // needed for absolute button positioning
+
+        var btn = document.createElement("button");
+        btn.id = "gantt-fullscreen-btn";
+        btn.textContent = "⛶ Pantalla completa";
+        container.appendChild(btn);
+
+        btn.addEventListener("click", function() {
+            if (!document.fullscreenElement) {
+                container.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        document.addEventListener("fullscreenchange", function() {
+            btn.textContent = document.fullscreenElement ? "✕ Salir" : "⛶ Pantalla completa";
+            gantt.render(); // reflow after resize
+        });
+    })();
+
     // Fall back to raw Bubble globals if data.js hasn't set window.ganttData yet
     var dataToLoad = window.ganttData || {
         data: window.BUBBLE_GANTT_DATA || [],

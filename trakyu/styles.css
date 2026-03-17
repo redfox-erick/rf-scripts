@@ -31,6 +31,25 @@
   color: #f97066;
 }
 
+/* Botón pantalla completa */
+#gantt-fullscreen-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 100;
+    background: #fff;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    transition: background 0.15s;
+}
+#gantt-fullscreen-btn:hover {
+    background: #f2f4f7;
+}
+
 /* Estilos base para el Tooltip */
 #bubble-tooltip {
     visibility: hidden; /* Inicialmente oculto */
