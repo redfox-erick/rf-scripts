@@ -38,7 +38,7 @@ Display an S-curve showing cumulative planned progress vs. cumulative actual pro
 - Chart re-renders on zoom change via `onAfterZoom` event.
 - Requires adding `Chart.js` to the Bubble page header.
 
-### 4. ⬜ Ocultar / mostrar columnas
+### 4. ✅ Ocultar / mostrar columnas
 Toggle visibility of individual grid columns.
 - **`text` / title column is always visible** — all others are toggleable.
 - Use DHTMLX native approach if possible (set `hide: true` on column + re-render); otherwise implement toggle UI in Bubble.

@@ -82,6 +82,12 @@ Responsable de:
 3. **Refactorización de lógica de tooltips**:
    - Lógica de tooltips optimizada en `functions.js` para mejorar la legibilidad y reutilización.
 
+7. **Ocultar / mostrar columnas** ✅:
+   - Botón flotante "☰ Columnas" abre un dropdown con checkboxes.
+   - `text` siempre visible; toggleables: `start_date`, `end_date`, `avance`, `add`.
+   - Usa `col.hide = true/false` + `gantt.render()` (enfoque nativo DHTMLX).
+   - Estado guardado en localStorage bajo `trakyu_col_visibility`, restaurado antes de `gantt.init()`.
+
 6. **Curva S** ✅:
    - Nuevo archivo `scurve.js` con toda la lógica del overlay.
    - Usa plugin `overlay` de DHTMLX + Chart.js 2.7.3 (CDN en el header de Bubble).
