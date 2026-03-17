@@ -101,8 +101,15 @@ gantt.license = "40762312";
 gantt.config.auto_scheduling = true;
 gantt.config.undo = true;
 
-document.addEventListener("DOMContentLoaded", function () {
+// In Bubble, DOMContentLoaded has already fired by the time HTML elements execute.
+// Check readyState and run immediately if the DOM is already ready.
+function initGantt() {
     gantt.init("gantt_here");
-    // Fix #4: parse must run after init(), not at module level in data.js
     gantt.parse(window.ganttData);
-});
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initGantt);
+} else {
+    initGantt();
+}
