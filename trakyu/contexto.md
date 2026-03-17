@@ -62,3 +62,6 @@ Responsable de:
 
 <link rel="stylesheet" href="https://.../gantt-styles.css">
 <script src="https://.../gantt-loader.js"></script>
+```
+
+7. **dhtmlxgantt.js** y **dhtmlxgantt.css**: Archivos de la versión Pro de dhtmlX Gantt cargados en el repositorio para habilitar las funcionalidades avanzadas.
