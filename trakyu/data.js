@@ -6,6 +6,24 @@ const ganttData = {
   links: window.BUBBLE_GANTT_LINKS || [] // Bubble debe definir esta variable global
 };
 
+// Validate Gantt data before parsing
+const validateDates = (tasks) => {
+  tasks.forEach(task => {
+    if (!task.start_date || isNaN(new Date(task.start_date).getTime())) {
+      console.error(`Invalid start_date for task ID ${task.id}:`, task.start_date);
+    }
+    if (!task.end_date || isNaN(new Date(task.end_date).getTime())) {
+      console.error(`Invalid end_date for task ID ${task.id}:`, task.end_date);
+    }
+  });
+};
+
+// Validate data before parsing
+gantt.attachEvent("onBeforeParse", function(data) {
+  validateDates(data.data);
+  return true; // Continue parsing
+});
+
 gantt.parse(ganttData);
 
 // Función para manejar la búsqueda dinámica
