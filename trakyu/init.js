@@ -100,4 +100,6 @@ gantt.config.auto_scheduling = true; // Enables auto-scheduling
 gantt.config.undo = true; // Enables undo/redo functionality
 gantt.plugins({ auto_scheduling: true, undo: true });
 
-gantt.init("gantt_here");
+document.addEventListener("DOMContentLoaded", function () {
+    gantt.init("gantt_here");
+});
