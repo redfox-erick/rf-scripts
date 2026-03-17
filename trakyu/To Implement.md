@@ -13,7 +13,7 @@ Features to implement one by one. Update status when done, then update `contexto
 
 ## Features
 
-### 1. ⬜ Columnas dinámicas — resize de columnas
+### 1. ✅ Columnas dinámicas — resize de columnas
 Allow the user to resize all grid columns by dragging.
 - All columns should be resizable (none fixed).
 - Save column widths per user using `localStorage` (no backend needed, zero cost).

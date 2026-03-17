@@ -82,4 +82,10 @@ Responsable de:
 3. **Refactorización de lógica de tooltips**:
    - Lógica de tooltips optimizada en `functions.js` para mejorar la legibilidad y reutilización.
 
+4. **Columnas dinámicas con resize** ✅:
+   - `gantt.config.keep_grid_width = false` para permitir resize independiente por columna.
+   - `resize: true` añadido a todas las columnas (excepto el botón `add`).
+   - Anchos guardados en `localStorage` bajo la clave `trakyu_col_widths` al soltar el resize.
+   - Anchos restaurados automáticamente en cada carga vía `applyColWidths()` antes de `gantt.init()`.
+
 ---
