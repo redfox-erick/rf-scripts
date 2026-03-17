@@ -60,6 +60,35 @@ gantt.attachEvent("onAfterTaskDelete", function(id, item) {
     }
 });
 
+// Links (dependencies)
+gantt.attachEvent("onAfterLinkAdd", function(id, link) {
+    if (typeof bubble_fn_createLink === "function") {
+        bubble_fn_createLink({
+            output1: id,
+            output2: link.source,
+            output3: link.target,
+            output4: link.type
+        });
+    }
+});
+
+gantt.attachEvent("onAfterLinkUpdate", function(id, link) {
+    if (typeof bubble_fn_updateLink === "function") {
+        bubble_fn_updateLink({
+            output1: id,
+            output2: link.source,
+            output3: link.target,
+            output4: link.type
+        });
+    }
+});
+
+gantt.attachEvent("onAfterLinkDelete", function(id) {
+    if (typeof bubble_fn_deleteLink === "function") {
+        bubble_fn_deleteLink({ output1: id });
+    }
+});
+
 // Maintain scroll position after update
 // Function to save the current scroll position
 function saveScrollPosition() {

@@ -226,6 +226,13 @@ gantt.license = "40762312";
 // Enable Pro features
 gantt.config.auto_scheduling = true;
 gantt.config.undo = true;
+gantt.config.drag_progress = false; // remove progress drag arrow
+gantt.config.drag_links = true;     // enable dependency drawing
+
+// Restrict to Finish-to-Start links only
+gantt.attachEvent("onBeforeLinkAdd", function(_id, link) {
+    return String(link.type) === String(gantt.config.links.finish_to_start);
+});
 
 // In Bubble, DOMContentLoaded has already fired by the time HTML elements execute.
 // Check readyState and run immediately if the DOM is already ready.
