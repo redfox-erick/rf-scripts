@@ -11,6 +11,18 @@
   border-color: #36ac81;
 }
 
+/* completed tasks — lock cursor on bar */
+.gantt_task_line.task_completed {
+  cursor: not-allowed;
+}
+
+/* green check in grid column */
+.task-done-check {
+  color: #1d5f47;
+  font-weight: bold;
+  margin-right: 2px;
+}
+
 /* parent tasks, project type, and milestones */
 .gantt_task_line.task-parent {
   background: #1d5f47;

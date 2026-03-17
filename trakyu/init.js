@@ -146,7 +146,12 @@ gantt.templates.task_class = function(start, end, task) {
 };
 
 gantt.config.columns = [
-  {name: "text", align: "left", label: "Descripción", tree: true, width: "*", min_width: 250, resize: true},
+  {name: "text", align: "left", label: "Descripción", tree: true, width: "*", min_width: 250, resize: true,
+    template: function(task) {
+      if (isCompleted(task)) return "<span class='task-done-check'>✓</span> " + task.text;
+      return task.text;
+    }
+  },
   {name: "start_date", label: "Inicio", width: 125, align: "center", resize: true},
   {name: "end_date", label: "Fin", width: 125, align: "center", resize: true},
   {
@@ -222,6 +227,12 @@ gantt.templates.timeline_cell_class = function (item, date) {
 
 gantt.attachEvent("onBeforeTaskDrag", function(id){ return !isCompleted(gantt.getTask(id)); });
 gantt.attachEvent("onBeforeLightbox", function(id) { return !isCompleted(gantt.getTask(id)); });
+gantt.attachEvent("onBeforeLinkAdd", function(_id, link) {
+    var source = gantt.isTaskExists(link.source) ? gantt.getTask(link.source) : null;
+    var target = gantt.isTaskExists(link.target) ? gantt.getTask(link.target) : null;
+    if ((source && isCompleted(source)) || (target && isCompleted(target))) return false;
+    return String(link.type) === String(gantt.config.links.finish_to_start);
+});
 
 // Add the license key for dhtmlX Gantt Pro
 gantt.license = "40762312";
