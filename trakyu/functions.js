@@ -1,3 +1,21 @@
+// Fix #3: Missing helper functions referenced in init.js
+
+function isCompleted(task) {
+  return task.progress >= 1;
+}
+
+function calcularAvance(task) {
+  return Math.round((task.progress || 0) * 100);
+}
+
+function confirmCompletion(id) {
+  if (!confirm("¿Marcar esta tarea como completada?")) return;
+  var task = gantt.getTask(id);
+  task.progress = 1;
+  gantt.updateTask(id);
+  gantt.render();
+}
+
 // Create Tasks
 gantt.attachEvent("onAfterTaskAdd", function(id, item) {
     // Create a JSON object with all necessary task information
@@ -69,10 +87,18 @@ gantt.attachEvent("onAfterTaskUpdate", function(id, task) {
 
 // Refactored tooltip logic for better readability
 const tooltipManager = (() => {
-    let tooltip = document.getElementById('bubble-tooltip');
+    // Fix #6: lazy-initialize so we don't query the DOM before Bubble renders the element
+    let _tooltip = null;
     let hideTimeout;
 
+    const getTooltip = () => {
+        if (!_tooltip) _tooltip = document.getElementById('bubble-tooltip');
+        return _tooltip;
+    };
+
     const showTooltip = (event, targetElement) => {
+        const tooltip = getTooltip();
+        if (!tooltip) return;
         const rect = targetElement.getBoundingClientRect();
         const tooltipWidth = tooltip.offsetWidth;
         const topPosition = rect.top + window.scrollY - tooltip.offsetHeight - 10;
@@ -84,6 +110,8 @@ const tooltipManager = (() => {
     };
 
     const hideTooltip = () => {
+        const tooltip = getTooltip();
+        if (!tooltip) return;
         tooltip.classList.remove('tooltip-visible');
     };
 

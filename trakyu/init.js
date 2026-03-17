@@ -1,6 +1,7 @@
 // Configuración inicial del Gantt
 
-gantt.plugins({ quick_info: true, tool_tip: true, marker: true, export_api: true });
+// Fix #1: Single plugins() call — second call was overwriting the first, losing quick_info/tool_tip/marker/export_api
+gantt.plugins({ quick_info: true, tool_tip: true, marker: true, export_api: true, auto_scheduling: true, undo: true });
 
 var today = new Date();
 gantt.addMarker({
@@ -25,9 +26,10 @@ gantt.config.layout = {
         { view: "grid", group: "vertical", scrollY: "scrollVer" },
         { resizer: true, width: 1 },
         {
+          // Fix #2: scrollbar must come after the timeline, not before
           rows: [
-            { view: "scrollbar", id: "scrollHor", group: "horizontal" },
-            { view: "timeline", scrollX: "scrollHor", scrollY: "scrollVer" }
+            { view: "timeline", scrollX: "scrollHor", scrollY: "scrollVer" },
+            { view: "scrollbar", id: "scrollHor", group: "horizontal" }
           ]
         },
         { view: "scrollbar", id: "scrollVer" }
@@ -96,10 +98,11 @@ gantt.attachEvent("onBeforeLightbox", function(id) { return !isCompleted(gantt.g
 gantt.license = "40762312";
 
 // Enable Pro features
-gantt.config.auto_scheduling = true; // Enables auto-scheduling
-gantt.config.undo = true; // Enables undo/redo functionality
-gantt.plugins({ auto_scheduling: true, undo: true });
+gantt.config.auto_scheduling = true;
+gantt.config.undo = true;
 
 document.addEventListener("DOMContentLoaded", function () {
     gantt.init("gantt_here");
+    // Fix #4: parse must run after init(), not at module level in data.js
+    gantt.parse(window.ganttData);
 });

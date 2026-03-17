@@ -1,7 +1,8 @@
 // Archivo para manejar los datos dinámicos del Gantt
 
 // Esperar que Bubble proporcione los datos dinámicamente
-const ganttData = {
+// Fix #4: exposed as window.ganttData so init.js can call gantt.parse() after gantt.init()
+window.ganttData = {
   data: window.BUBBLE_GANTT_DATA || [], // Bubble debe definir esta variable global
   links: window.BUBBLE_GANTT_LINKS || [] // Bubble debe definir esta variable global
 };
@@ -24,9 +25,12 @@ gantt.attachEvent("onBeforeParse", function(data) {
   return true; // Continue parsing
 });
 
-gantt.parse(ganttData);
+// gantt.parse() is now called in init.js after gantt.init() — see Fix #4
 
 // Función para manejar la búsqueda dinámica
+// Fix #5: track the event id so we can detach the previous handler before adding a new one
+var _searchEventId = null;
+
 function applySearch(busqueda) {
   if (busqueda) {
     gantt.eachTask(function(task) {
@@ -41,7 +45,13 @@ function applySearch(busqueda) {
     });
   }
 
-  gantt.attachEvent("onBeforeTaskDisplay", function(id, task) {
+  // Detach previous handler to avoid accumulation
+  if (_searchEventId !== null) {
+    gantt.detachEvent(_searchEventId);
+    _searchEventId = null;
+  }
+
+  _searchEventId = gantt.attachEvent("onBeforeTaskDisplay", function(id, task) {
     if (!busqueda) return true;
     if (task.text.toLowerCase().indexOf(busqueda.toLowerCase()) !== -1) return true;
 
