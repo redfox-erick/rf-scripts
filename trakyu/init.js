@@ -2,7 +2,7 @@
 console.log("[Gantt] init.js loaded");
 
 // Fix #1: Single plugins() call — second call was overwriting the first, losing quick_info/tool_tip/marker/export_api
-gantt.plugins({ quick_info: true, tool_tip: true, marker: true, export_api: true, auto_scheduling: true, undo: true });
+gantt.plugins({ quick_info: true, tool_tip: true, marker: true, export_api: true, auto_scheduling: true, undo: true, overlay: true });
 
 var today = new Date();
 gantt.addMarker({
@@ -181,6 +181,8 @@ function initGantt() {
     } catch(e) {
         console.error("[Gantt] gantt.parse() FAILED:", e);
     }
+
+    if (typeof initSCurve === "function") initSCurve();
 }
 
 console.log("[Gantt] readyState at script execution:", document.readyState);

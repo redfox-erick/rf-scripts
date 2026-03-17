@@ -31,10 +31,10 @@
   color: #f97066;
 }
 
-/* Botón pantalla completa */
-#gantt-fullscreen-btn {
+/* Botones flotantes del Gantt (pantalla completa, curva S) */
+#gantt-fullscreen-btn,
+#gantt-scurve-btn {
     position: absolute;
-    top: 8px;
     right: 8px;
     z-index: 100;
     background: #fff;
@@ -46,8 +46,24 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     transition: background 0.15s;
 }
-#gantt-fullscreen-btn:hover {
+#gantt-fullscreen-btn { top: 8px; }
+#gantt-scurve-btn     { top: 42px; }
+
+#gantt-fullscreen-btn:hover,
+#gantt-scurve-btn:hover {
     background: #f2f4f7;
+}
+#gantt-scurve-btn.active {
+    background: #36ac81;
+    color: #fff;
+    border-color: #36ac81;
+}
+
+/* Task bars dim when S-curve overlay is visible */
+.overlay_visible .gantt_task_line,
+.overlay_visible .gantt_task_link {
+    opacity: 0.4;
+    transition: opacity 200ms;
 }
 
 /* Estilos base para el Tooltip */
