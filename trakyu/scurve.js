@@ -1,15 +1,15 @@
 // Curva S — planned vs. actual cumulative progress
-// Requires: Chart.js 2.7.3, DHTMLX overlay plugin
+// Renders as a full-coverage panel over the entire Gantt container
+// Requires: Chart.js 2.7.3
 
 window.initSCurve = function() {
-    if (!gantt.ext || !gantt.ext.overlay) {
-        console.warn("[Gantt] overlay plugin not available — Curva S disabled");
+    if (typeof Chart === "undefined") {
+        console.warn("[Gantt] Chart.js not loaded — Curva S disabled");
         return;
     }
 
-    var overlayControl = gantt.ext.overlay;
     var myChart = null;
-    var lineOverlay;
+    var panel   = null;
     var dateToStr = gantt.date.date_to_str("%d/%m/%Y");
 
     // ---- Data helpers ----
@@ -38,7 +38,6 @@ window.initSCurve = function() {
         var scale = gantt.getScale();
         var step = scale.unit;
         var timegrid = {};
-        var totalDuration = 0;
 
         gantt.eachTask(function(task) {
             if (gantt.isSummaryTask(task) || !task.duration) return;
@@ -53,7 +52,6 @@ window.initSCurve = function() {
                 if (!timegrid[ts]) timegrid[ts] = { planned: 0, real: 0 };
                 timegrid[ts].planned += 1;
                 if (date <= today) timegrid[ts].real += 1 * (task.progress || 0);
-                totalDuration += 1;
             }
         });
 
@@ -96,73 +94,79 @@ window.initSCurve = function() {
         return { planned: cumulativePlanned, real: cumulativeReal, predicted: cumulativePredicted };
     }
 
-    function getScalePaddings() {
-        var scale = gantt.getScale();
-        var dataRange = gantt.getSubtaskDates();
-        var padding = { left: 0, right: 0, top: 0, bottom: 0 };
-        if (dataRange.start_date) {
-            var yLabelWidth = 48;
-            padding.left   = gantt.posFromDate(dataRange.start_date) - yLabelWidth;
-            padding.right  = scale.full_width - gantt.posFromDate(dataRange.end_date) - yLabelWidth;
-            padding.top    = gantt.config.row_height - 12;
-            padding.bottom = gantt.config.row_height - 12;
-        }
-        return padding;
-    }
+    // ---- Panel show/hide ----
 
-    // ---- Overlay ----
+    function showSCurve() {
+        var ganttContainer = document.getElementById("gantt_here");
 
-    lineOverlay = overlayControl.addOverlay(function(container) {
+        panel = document.createElement("div");
+        panel.id = "scurve-panel";
+
+        var header = document.createElement("div");
+        header.id = "scurve-header";
+
+        var title = document.createElement("span");
+        title.textContent = "Curva S — Progreso acumulado";
+
+        var closeBtn = document.createElement("button");
+        closeBtn.id = "scurve-close-btn";
+        closeBtn.textContent = "✕ Cerrar";
+        closeBtn.addEventListener("click", hideSCurve);
+
+        header.appendChild(title);
+        header.appendChild(closeBtn);
+
+        var canvas = document.createElement("canvas");
+        canvas.id = "scurve-canvas";
+
+        panel.appendChild(header);
+        panel.appendChild(canvas);
+        ganttContainer.appendChild(panel);
+
         var chartScale = getChartScaleRange();
         var scaleLabels = chartScale.map(function(d) { return dateToStr(d); });
         var values = getProgressLine();
-
-        var canvas = document.createElement("canvas");
-        container.appendChild(canvas);
-        canvas.style.height = container.offsetHeight + "px";
-        canvas.style.width  = container.offsetWidth  + "px";
 
         if (myChart) myChart.destroy();
 
         myChart = new Chart(canvas.getContext("2d"), {
             type: "line",
             data: {
+                labels: scaleLabels,
                 datasets: [
                     {
                         label: "Planificado",
                         borderColor: "#2563eb",
-                        backgroundColor: "#2563eb",
+                        backgroundColor: "rgba(37,99,235,0.08)",
                         data: values.planned,
-                        fill: false,
-                        cubicInterpolationMode: "monotone"
+                        fill: true,
+                        cubicInterpolationMode: "monotone",
+                        pointRadius: 0
                     },
                     {
                         label: "Real",
                         borderColor: "#36ac81",
-                        backgroundColor: "#36ac81",
+                        backgroundColor: "rgba(54,172,129,0.08)",
                         data: values.real,
-                        fill: false,
-                        cubicInterpolationMode: "monotone"
+                        fill: true,
+                        cubicInterpolationMode: "monotone",
+                        pointRadius: 0
                     },
                     {
                         label: "Proyectado",
                         borderColor: "#36ac81",
-                        backgroundColor: "#36ac81",
+                        backgroundColor: "transparent",
                         data: values.predicted,
-                        borderDash: [5, 10],
+                        borderDash: [6, 4],
                         fill: false,
-                        cubicInterpolationMode: "monotone"
+                        cubicInterpolationMode: "monotone",
+                        pointRadius: 0
                     }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                layout: { padding: getScalePaddings() },
-                onResize: function(chart) {
-                    if (gantt.getSubtaskDates().start_date)
-                        chart.options.layout.padding = getScalePaddings();
-                },
                 legend: { display: true, position: "top" },
                 tooltips: {
                     mode: "index",
@@ -178,45 +182,51 @@ window.initSCurve = function() {
                     }
                 },
                 scales: {
-                    xAxes: [
-                        { labels: scaleLabels, gridLines: { display: false }, ticks: { display: false } },
-                        { position: "top", labels: scaleLabels, gridLines: { display: false }, ticks: { display: false } }
-                    ],
-                    yAxes: [
-                        {
-                            gridLines: { display: false },
-                            ticks: { min: 0, max: 100, stepSize: 10, callback: function(v) { return v <= 100 ? v + "%" : ""; } }
+                    xAxes: [{
+                        ticks: {
+                            maxRotation: 45,
+                            autoSkip: true,
+                            maxTicksLimit: 20
                         },
-                        {
-                            position: "right",
-                            gridLines: { display: false },
-                            ticks: { min: 0, max: 100, stepSize: 10, callback: function(v) { return v <= 100 ? v + "%" : ""; } }
-                        }
-                    ]
+                        gridLines: { color: "rgba(0,0,0,0.05)" }
+                    }],
+                    yAxes: [{
+                        ticks: {
+                            min: 0,
+                            max: 100,
+                            stepSize: 10,
+                            callback: function(v) { return v + "%"; }
+                        },
+                        gridLines: { color: "rgba(0,0,0,0.05)" }
+                    }]
                 }
             }
         });
+    }
 
-        return canvas;
-    });
+    function hideSCurve() {
+        if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
+        if (myChart) { myChart.destroy(); myChart = null; }
+        panel = null;
+        toggleBtn.textContent = "📈 Curva S";
+        toggleBtn.classList.remove("active");
+    }
 
     // ---- Toggle button ----
 
     var ganttContainer = document.getElementById("gantt_here");
-    var btn = document.createElement("button");
-    btn.id = "gantt-scurve-btn";
-    btn.textContent = "📈 Curva S";
-    ganttContainer.appendChild(btn);
+    var toggleBtn = document.createElement("button");
+    toggleBtn.id = "gantt-scurve-btn";
+    toggleBtn.textContent = "📈 Curva S";
+    ganttContainer.appendChild(toggleBtn);
 
-    btn.addEventListener("click", function() {
-        if (overlayControl.isOverlayVisible(lineOverlay)) {
-            overlayControl.hideOverlay(lineOverlay);
-            gantt.$root.classList.remove("overlay_visible");
-            btn.classList.remove("active");
+    toggleBtn.addEventListener("click", function() {
+        if (panel) {
+            hideSCurve();
         } else {
-            overlayControl.showOverlay(lineOverlay);
-            gantt.$root.classList.add("overlay_visible");
-            btn.classList.add("active");
+            showSCurve();
+            toggleBtn.textContent = "📈 Curva S";
+            toggleBtn.classList.add("active");
         }
     });
 

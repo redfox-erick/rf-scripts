@@ -59,11 +59,47 @@
     border-color: #36ac81;
 }
 
-/* Task bars dim when S-curve overlay is visible */
-.overlay_visible .gantt_task_line,
-.overlay_visible .gantt_task_link {
-    opacity: 0.4;
-    transition: opacity 200ms;
+/* S-curve full-coverage panel */
+#scurve-panel {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+#scurve-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+}
+
+#scurve-header span {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+#scurve-close-btn {
+    background: #fff;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 13px;
+    cursor: pointer;
+}
+#scurve-close-btn:hover {
+    background: #f2f4f7;
+}
+
+#scurve-canvas {
+    flex: 1;
+    min-height: 0;
 }
 
 /* Estilos base para el Tooltip */
