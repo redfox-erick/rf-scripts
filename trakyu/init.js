@@ -14,10 +14,42 @@ gantt.addMarker({
 
 gantt.i18n.setLocale("es");
 gantt.config.grid_width = 920;
+gantt.config.keep_grid_width = false; // allow individual column resizing
 gantt.config.row_height = 40;
 gantt.config.bar_height = 24;
 gantt.config.date_format = "%Y-%m-%d %H:%i";
-gantt.config.work_time = false; 
+gantt.config.work_time = false;
+
+// --- Column width persistence ---
+var COL_WIDTHS_KEY = "trakyu_col_widths";
+
+function saveColWidths() {
+  var widths = {};
+  gantt.config.columns.forEach(function(col) {
+    if (col.name) widths[col.name] = col.width;
+  });
+  localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify(widths));
+}
+
+function applyColWidths() {
+  var saved = localStorage.getItem(COL_WIDTHS_KEY);
+  if (!saved) return;
+  try {
+    var widths = JSON.parse(saved);
+    gantt.config.columns.forEach(function(col) {
+      if (col.name && widths[col.name] !== undefined) {
+        col.width = widths[col.name];
+      }
+    });
+  } catch(e) {
+    localStorage.removeItem(COL_WIDTHS_KEY); // discard corrupt data
+  }
+}
+
+gantt.attachEvent("onColumnResizeEnd", function(index, column, newWidth) {
+  saveColWidths();
+  return true;
+});
 
 gantt.config.layout = {
   css: "gantt_container",
@@ -45,21 +77,22 @@ gantt.templates.task_class = function(start, end, task) {
 };
 
 gantt.config.columns = [
-  {name: "text", align: "left", label: "Descripción", tree: true, width: "*", min_width: 250},
-  {name: "start_date", label: "Inicio", width: 125, align: "center"},
-  {name: "end_date", label: "Fin", width: 125, align: "center"},
+  {name: "text", align: "left", label: "Descripción", tree: true, width: "*", min_width: 250, resize: true},
+  {name: "start_date", label: "Inicio", width: 125, align: "center", resize: true},
+  {name: "end_date", label: "Fin", width: 125, align: "center", resize: true},
   {
-    name: "avance", label: "Avance", align: "center", width: 130,
+    name: "avance", label: "Avance", align: "center", width: 130, resize: true,
     template: function(task){
       const porcentaje = calcularAvance(task);
       return porcentaje + "%";
     }
   },
   {
-    name: "completar", 
-    label: "", 
-    width: 50, 
-    align: "center", 
+    name: "completar",
+    label: "",
+    width: 50,
+    align: "center",
+    resize: true,
     template: function(task) {
       if (gantt.hasChild(task.id) || isCompleted(task)) return "";
       return "<div class='completar-container'><button class='btn-check-circle' onclick='confirmCompletion(\"" + task.id + "\")'>✓</button></div>";
@@ -111,6 +144,8 @@ function initGantt() {
     console.log("[Gantt] window.ganttData:", window.ganttData);
     console.log("[Gantt] BUBBLE_GANTT_DATA:", window.BUBBLE_GANTT_DATA);
     console.log("[Gantt] BUBBLE_GANTT_LINKS:", window.BUBBLE_GANTT_LINKS);
+
+    applyColWidths(); // restore saved column widths before rendering
 
     try {
         gantt.init("gantt_here");
