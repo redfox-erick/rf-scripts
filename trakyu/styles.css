@@ -13,8 +13,8 @@
 
 /* parent tasks, project type, and milestones */
 .gantt_task_line.task-parent {
-  background: #05110d;
-  border-color: #05110d;
+  background: #1d5f47;
+  border-color: #1d5f47;
 }
 
 /* progreso dentro de la barra */
@@ -118,30 +118,30 @@
 }
 #gantt-baseline-btn:hover { background: #f2f4f7; }
 #gantt-baseline-btn.active {
-    background: #05110d;
+    background: #1d5f47;
     color: #fff;
-    border-color: #05110d;
+    border-color: #1d5f47;
 }
 
 /* Baseline bar (rendered below the live task bar) */
 .baseline-bar {
     position: absolute;
     border-radius: 3px;
-    background: #05110d;
+    background: #1d5f47;
     opacity: 0.7;
 }
 
 /* Ghost task rows (deleted from live, only in baseline) */
 .task-ghost .gantt_task_line {
     background: #86efac;
-    border-color: #05110d;
+    border-color: #1d5f47;
     opacity: 0.5;
     pointer-events: none;
 }
 .gantt_row.task-ghost,
 .gantt_row.gantt_row_task.task-ghost {
     background: #f0fdf4;
-    color: #05110d;
+    color: #1d5f47;
     font-style: italic;
     opacity: 0.8;
 }
