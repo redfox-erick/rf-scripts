@@ -21,16 +21,22 @@ Allow the user to resize all grid columns by dragging.
 
 ### 2. ⬜ Pantalla completa
 Toggle the Gantt into fullscreen mode.
-- **Pending clarification:** triggered by button inside the Gantt or from Bubble? Native browser Fullscreen API or viewport expansion?
+- Button rendered inside the Gantt (via `gantt.config.buttons_left` or a custom toolbar element).
+- Use the native browser Fullscreen API (`requestFullscreen` / `exitFullscreen`) on the `#gantt_here` container.
+- Button label toggles between "⛶ Pantalla completa" and "✕ Salir".
 
 ### 3. ⬜ Curva S (Planned vs. Actual)
 Display an S-curve showing cumulative planned progress vs. cumulative actual progress over time.
 - **X axis:** time (dates).
 - **Y axis:** cumulative progress % (0–100).
-- **Planned line:** derived from task `start_date` / `end_date` (assumes linear daily progress per task).
-- **Actual line:** derived from task `progress` field.
-- Use DHTMLX's native overlay/chart capability if available; otherwise render as a custom SVG/canvas panel beneath or alongside the Gantt.
-- **Open question:** confirm whether DHTMLX Pro exposes a native S-curve or just a resource histogram.
+- **Planned line:** derived from task `start_date` / `end_date` (linear daily weight per task).
+- **Actual line:** derived from task `progress` field (only up to today).
+- **Predicted line:** projected forward from today's average daily real progress (dashed).
+- **Implementation:** use DHTMLX native `overlay` plugin + Chart.js 2.7.3 rendered on a `<canvas>`.
+- Toggle button inside the Gantt control bar (same pattern as fullscreen button).
+- When visible, task bars become semi-transparent (`opacity: 0.6`) for readability.
+- Chart re-renders on zoom change via `onAfterZoom` event.
+- Requires adding `Chart.js` to the Bubble page header.
 
 ### 4. ⬜ Ocultar / mostrar columnas
 Toggle visibility of individual grid columns.
