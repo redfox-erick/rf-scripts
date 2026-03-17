@@ -50,7 +50,7 @@ Implement FS task links.
 - On link create/update/delete → call `bubble_fn_createLink`, `bubble_fn_updateLink`, `bubble_fn_deleteLink` (same pattern as tasks).
 - Payload should include: `link id`, `source task id`, `target task id`, `type` (always `"0"` for FS).
 
-### 6. ⬜ Actualizar tarea padre + auto-refresh de datos
+### 6. ✅ Actualizar tarea padre + auto-refresh de datos
 Parent task update (start/end overflow) will be handled 100% on the Bubble backend.
 - The Gantt needs a **data refresh mechanism** so that after Bubble updates the parent, the visual is updated without a full page reload.
 - Implement a global `window.refreshGanttData()` function that Bubble can call via `Run JavaScript` to re-fetch `BUBBLE_GANTT_DATA` / `BUBBLE_GANTT_LINKS` and re-parse the Gantt in place.
