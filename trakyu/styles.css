@@ -1,0 +1,32 @@
+/* barra */
+.gantt_task_line{
+  background: #36ac81;
+  border-color: #36ac81;
+}
+
+/* progreso dentro de la barra */
+.gantt_task_progress{
+  background: rgba(14,165,233,.6);
+}
+
+/* El puntito/bullet (en algunas versiones es gantt_qi_title_bar) */
+.gantt_quick_info .gantt_qi_title_bar,
+.gantt_quick_info .gantt_qi_color{
+  background: #36ac81;
+}
+
+/* Botones */
+.gantt_quick_info .gantt_qi_controls .gantt_qi_button{
+  color: #36ac81;
+}
+.gantt_quick_info .gantt_qi_controls .gantt_qi_button:hover{
+  color: #36ac81;
+}
+
+/* Botón eliminar */
+.gantt_quick_info .gantt_qi_button.gantt_qi_delete{
+  color: #f97066;
+}
+.gantt_quick_info .gantt_qi_button.gantt_qi_delete:hover{
+  color: #f97066;
+}
