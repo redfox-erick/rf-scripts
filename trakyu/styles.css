@@ -11,6 +11,12 @@
   border-color: #36ac81;
 }
 
+/* parent tasks, project type, and milestones */
+.gantt_task_line.task-parent {
+  background: #15803d;
+  border-color: #15803d;
+}
+
 /* progreso dentro de la barra */
 .gantt_task_progress{
   background: rgba(14,165,233,.6);

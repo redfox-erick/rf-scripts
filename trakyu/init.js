@@ -139,6 +139,9 @@ gantt.config.layout = {
 
 gantt.templates.task_class = function(start, end, task) {
   if (isCompleted(task)) return "task_completed";
+  if (gantt.hasChild(task.id) ||
+      task.type === gantt.config.types.project ||
+      task.type === gantt.config.types.milestone) return "task-parent";
   return "";
 };
 
