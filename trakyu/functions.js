@@ -67,68 +67,42 @@ gantt.attachEvent("onAfterTaskUpdate", function(id, task) {
     restoreScrollPosition(task._scroll_pos);
 });
 
-// Lógica para gestionar el tooltip en Bubble
-document.addEventListener('DOMContentLoaded', () => {
-    const targetId = "tooltip-no-acceso";
-    const targetElement = document.getElementById(targetId);
-
-    // Verificar si el elemento objetivo existe
-    if (!targetElement) {
-        console.warn(`[Bubble Tooltip] No se encontró el elemento con ID: ${targetId}. Asegúrate de que existe en la página.`);
-        return;
-    }
-
-    // Crear el elemento Tooltip si no existe
+// Refactored tooltip logic for better readability
+const tooltipManager = (() => {
     let tooltip = document.getElementById('bubble-tooltip');
-    if (!tooltip) {
-        tooltip = document.createElement('div');
-        tooltip.id = 'bubble-tooltip';
-        tooltip.innerHTML = '¡Acceso Denegado!<br/>No tienes permisos para esta acción.';
-        document.body.appendChild(tooltip);
-    }
-
     let hideTimeout;
 
-    // Función para mostrar el Tooltip
-    const showTooltip = (event) => {
-        clearTimeout(hideTimeout);
-
+    const showTooltip = (event, targetElement) => {
         const rect = targetElement.getBoundingClientRect();
         const tooltipWidth = tooltip.offsetWidth;
-
-        let topPosition = rect.top + window.scrollY - tooltip.offsetHeight - 10;
-        let leftPosition = rect.left + window.scrollX + (rect.width / 2) - (tooltipWidth / 2);
-
-        if (topPosition < 0) {
-            topPosition = rect.bottom + window.scrollY + 10;
-            tooltip.style.setProperty('--tooltip-arrow-top', '-5px');
-            tooltip.style.setProperty('--tooltip-arrow-bottom', 'auto');
-        } else {
-            tooltip.style.setProperty('--tooltip-arrow-top', '100%');
-            tooltip.style.setProperty('--tooltip-arrow-bottom', 'auto');
-        }
+        const topPosition = rect.top + window.scrollY - tooltip.offsetHeight - 10;
+        const leftPosition = rect.left + window.scrollX + (rect.width / 2) - (tooltipWidth / 2);
 
         tooltip.style.top = `${topPosition}px`;
         tooltip.style.left = `${leftPosition}px`;
         tooltip.classList.add('tooltip-visible');
     };
 
-    // Función para ocultar el Tooltip
     const hideTooltip = () => {
-        hideTimeout = setTimeout(() => {
-            tooltip.classList.remove('tooltip-visible');
-        }, 100);
+        tooltip.classList.remove('tooltip-visible');
     };
 
-    // Adjuntar los escuchadores de eventos
-    targetElement.addEventListener('mouseover', showTooltip);
-    targetElement.addEventListener('mouseout', hideTooltip);
+    const attachTooltipEvents = (targetId) => {
+        const targetElement = document.getElementById(targetId);
+        if (!targetElement) return;
 
-    window.addEventListener('scroll', () => {
-        if (tooltip.classList.contains('tooltip-visible')) {
-            showTooltip();
-        }
-    });
+        targetElement.addEventListener('mouseenter', (event) => {
+            clearTimeout(hideTimeout);
+            showTooltip(event, targetElement);
+        });
 
-    console.log(`[Bubble Tooltip] Script cargado y escuchando el ID: ${targetId}`);
-});
+        targetElement.addEventListener('mouseleave', () => {
+            hideTimeout = setTimeout(hideTooltip, 300);
+        });
+    };
+
+    return { attachTooltipEvents };
+})();
+
+// Example usage
+tooltipManager.attachTooltipEvents('tooltip-no-acceso');

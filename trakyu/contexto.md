@@ -65,3 +65,21 @@ Responsable de:
 ```
 
 7. **dhtmlxgantt.js** y **dhtmlxgantt.css**: Archivos de la versión Pro de dhtmlX Gantt cargados en el repositorio para habilitar las funcionalidades avanzadas.
+
+---
+
+# 🚀 Estado actual del proyecto
+
+## Implementaciones recientes
+1. **Integración de dhtmlX Gantt Pro**:
+   - Funcionalidades avanzadas habilitadas: auto-scheduling, undo/redo.
+   - Archivos Pro (`dhtmlxgantt.js` y `dhtmlxgantt.css`) añadidos al repositorio.
+
+2. **Validación de datos**:
+   - Lógica añadida en `data.js` para validar los campos `start_date` y `end_date`.
+   - Errores de validación se registran en la consola para facilitar el debugging.
+
+3. **Refactorización de lógica de tooltips**:
+   - Lógica de tooltips optimizada en `functions.js` para mejorar la legibilidad y reutilización.
+
+---
