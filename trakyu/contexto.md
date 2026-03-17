@@ -82,6 +82,14 @@ Responsable de:
 3. **Refactorización de lógica de tooltips**:
    - Lógica de tooltips optimizada en `functions.js` para mejorar la legibilidad y reutilización.
 
+6. **Curva S** ✅:
+   - Nuevo archivo `scurve.js` con toda la lógica del overlay.
+   - Usa plugin `overlay` de DHTMLX + Chart.js 2.7.3 (CDN en el header de Bubble).
+   - Muestra 3 líneas: Planificado, Real, Proyectado (dashed).
+   - Botón toggle apilado debajo del botón fullscreen, se pone verde cuando está activo.
+   - Barras del Gantt se atenúan al 40% de opacidad cuando el overlay está visible.
+   - `initSCurve()` es llamado desde `initGantt()` en init.js tras `gantt.parse()`.
+
 5. **Pantalla completa** ✅:
    - Botón flotante inyectado en `#gantt_here` tras `gantt.init()`.
    - Usa la API nativa del navegador (`requestFullscreen` / `exitFullscreen`).

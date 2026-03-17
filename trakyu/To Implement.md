@@ -25,7 +25,7 @@ Toggle the Gantt into fullscreen mode.
 - Use the native browser Fullscreen API (`requestFullscreen` / `exitFullscreen`) on the `#gantt_here` container.
 - Button label toggles between "⛶ Pantalla completa" and "✕ Salir".
 
-### 3. ⬜ Curva S (Planned vs. Actual)
+### 3. ✅ Curva S (Planned vs. Actual)
 Display an S-curve showing cumulative planned progress vs. cumulative actual progress over time.
 - **X axis:** time (dates).
 - **Y axis:** cumulative progress % (0–100).
