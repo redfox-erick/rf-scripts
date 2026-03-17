@@ -99,30 +99,30 @@
 }
 #gantt-baseline-btn:hover { background: #f2f4f7; }
 #gantt-baseline-btn.active {
-    background: #7c3aed;
+    background: #15803d;
     color: #fff;
-    border-color: #7c3aed;
+    border-color: #15803d;
 }
 
 /* Baseline bar (rendered below the live task bar) */
 .baseline-bar {
     position: absolute;
     border-radius: 3px;
-    background: #7c3aed;
+    background: #15803d;
     opacity: 0.7;
 }
 
 /* Ghost task rows (deleted from live, only in baseline) */
 .task-ghost .gantt_task_line {
-    background: #c4b5fd;
-    border-color: #7c3aed;
+    background: #86efac;
+    border-color: #15803d;
     opacity: 0.5;
     pointer-events: none;
 }
 .gantt_row.task-ghost,
 .gantt_row.gantt_row_task.task-ghost {
-    background: #faf5ff;
-    color: #7c3aed;
+    background: #f0fdf4;
+    color: #15803d;
     font-style: italic;
     opacity: 0.8;
 }
