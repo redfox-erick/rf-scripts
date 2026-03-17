@@ -60,58 +60,55 @@ gantt.attachEvent("onAfterTaskDelete", function(id, item) {
     }
 });
 
-// Links (dependencies)
+// Links (dependencies) — Bubble callbacks and scroll preservation are handled together below
+
+// Scroll position preservation
+function saveScrollPosition() {
+    var state = gantt.getScrollState();
+    return { left: state.x || 0, top: state.y || 0 };
+}
+
+function restoreScrollPosition(pos) {
+    if (pos) gantt.scrollTo(pos.left, pos.top);
+}
+
+// Tasks
+gantt.attachEvent("onBeforeTaskUpdate", function(id, task) {
+    task._scroll_pos = saveScrollPosition();
+    return true;
+});
+gantt.attachEvent("onAfterTaskUpdate", function(id, task) {
+    restoreScrollPosition(task._scroll_pos);
+});
+
+// Links — use a module-level variable since link objects aren't persisted between before/after
+var _linkScroll = null;
+gantt.attachEvent("onBeforeLinkAdd", function() {
+    _linkScroll = saveScrollPosition();
+    return true;
+});
 gantt.attachEvent("onAfterLinkAdd", function(id, link) {
+    restoreScrollPosition(_linkScroll);
     if (typeof bubble_fn_createLink === "function") {
-        bubble_fn_createLink({
-            output1: id,
-            output2: link.source,
-            output3: link.target,
-            output4: link.type
-        });
+        bubble_fn_createLink({ output1: id, output2: link.source, output3: link.target, output4: link.type });
     }
 });
 
 gantt.attachEvent("onAfterLinkUpdate", function(id, link) {
     if (typeof bubble_fn_updateLink === "function") {
-        bubble_fn_updateLink({
-            output1: id,
-            output2: link.source,
-            output3: link.target,
-            output4: link.type
-        });
+        bubble_fn_updateLink({ output1: id, output2: link.source, output3: link.target, output4: link.type });
     }
 });
 
+gantt.attachEvent("onBeforeLinkDelete", function() {
+    _linkScroll = saveScrollPosition();
+    return true;
+});
 gantt.attachEvent("onAfterLinkDelete", function(id) {
+    restoreScrollPosition(_linkScroll);
     if (typeof bubble_fn_deleteLink === "function") {
         bubble_fn_deleteLink({ output1: id });
     }
-});
-
-// Maintain scroll position after update
-// Function to save the current scroll position
-function saveScrollPosition() {
-    return {
-        left: gantt.scrollLeft,
-        top: gantt.scrollTop
-    };
-}
-
-// Function to restore the saved scroll position
-function restoreScrollPosition(position) {
-    gantt.scrollTo(position.left, position.top);
-}
-
-// Subscribe to onBeforeTaskUpdate to save scroll position before an update
-gantt.attachEvent("onBeforeTaskUpdate", function(id, task) {
-    task._scroll_pos = saveScrollPosition();
-    return true; // Allow the update to proceed
-});
-
-// Subscribe to onAfterTaskUpdate to restore scroll position after an update
-gantt.attachEvent("onAfterTaskUpdate", function(id, task) {
-    restoreScrollPosition(task._scroll_pos);
 });
 
 // Refactored tooltip logic for better readability
