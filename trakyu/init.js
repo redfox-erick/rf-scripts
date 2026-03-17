@@ -213,17 +213,18 @@ function initGantt() {
         return;
     }
 
-    // --- Fullscreen button ---
+    // --- Floating controls ---
     (function() {
         var container = document.getElementById("gantt_here");
-        container.style.position = "relative"; // needed for absolute button positioning
+        container.style.position = "relative";
 
-        var btn = document.createElement("button");
-        btn.id = "gantt-fullscreen-btn";
-        btn.textContent = "⛶ Pantalla completa";
-        container.appendChild(btn);
+        // Fullscreen button
+        var fsBtn = document.createElement("button");
+        fsBtn.id = "gantt-fullscreen-btn";
+        fsBtn.textContent = "⛶ Pantalla completa";
+        container.appendChild(fsBtn);
 
-        btn.addEventListener("click", function() {
+        fsBtn.addEventListener("click", function() {
             if (!document.fullscreenElement) {
                 container.requestFullscreen();
             } else {
@@ -232,9 +233,36 @@ function initGantt() {
         });
 
         document.addEventListener("fullscreenchange", function() {
-            btn.textContent = document.fullscreenElement ? "✕ Salir" : "⛶ Pantalla completa";
-            gantt.render(); // reflow after resize
+            fsBtn.textContent = document.fullscreenElement ? "✕ Salir" : "⛶ Pantalla completa";
+            gantt.render();
         });
+
+        // Zoom button group
+        var zoomGroup = document.createElement("div");
+        zoomGroup.id = "gantt-zoom-group";
+
+        var zoomOut = document.createElement("button");
+        zoomOut.className = "gantt-zoom-btn";
+        zoomOut.textContent = "−";
+        zoomOut.title = "Alejar";
+        zoomOut.addEventListener("click", window.zoom_out);
+
+        var zoomFit = document.createElement("button");
+        zoomFit.className = "gantt-zoom-btn";
+        zoomFit.textContent = "↔";
+        zoomFit.title = "Ajustar a ventana";
+        zoomFit.addEventListener("click", window.fitGantt);
+
+        var zoomIn = document.createElement("button");
+        zoomIn.className = "gantt-zoom-btn";
+        zoomIn.textContent = "+";
+        zoomIn.title = "Acercar";
+        zoomIn.addEventListener("click", window.zoom_in);
+
+        zoomGroup.appendChild(zoomOut);
+        zoomGroup.appendChild(zoomFit);
+        zoomGroup.appendChild(zoomIn);
+        container.appendChild(zoomGroup);
     })();
 
     // Fall back to raw Bubble globals if data.js hasn't set window.ganttData yet
