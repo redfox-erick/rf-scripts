@@ -369,6 +369,7 @@ function initGantt() {
     }
 
     restoreOpenTasks();
+    if (typeof restorePersistedScroll === "function") restorePersistedScroll();
     if (typeof initSCurve === "function") initSCurve();
 }
 

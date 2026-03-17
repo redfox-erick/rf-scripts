@@ -63,6 +63,8 @@ gantt.attachEvent("onAfterTaskDelete", function(id, item) {
 // Links (dependencies) — Bubble callbacks and scroll preservation are handled together below
 
 // Scroll position preservation
+var SCROLL_KEY = "trakyu_scroll";
+
 function saveScrollPosition() {
     var state = gantt.getScrollState();
     return { left: state.x || 0, top: state.y || 0 };
@@ -70,6 +72,23 @@ function saveScrollPosition() {
 
 function restoreScrollPosition(pos) {
     if (pos) setTimeout(function() { gantt.scrollTo(pos.left, pos.top); }, 0);
+}
+
+// Persist scroll to localStorage on every scroll event
+gantt.attachEvent("onGanttScroll", function(left, top) {
+    localStorage.setItem(SCROLL_KEY, JSON.stringify({ left: left, top: top }));
+});
+
+// Restore persisted scroll after parse (called from initGantt and refreshGanttData)
+function restorePersistedScroll() {
+    var saved = localStorage.getItem(SCROLL_KEY);
+    if (!saved) return;
+    try {
+        var pos = JSON.parse(saved);
+        setTimeout(function() { gantt.scrollTo(pos.left, pos.top); }, 0);
+    } catch(e) {
+        localStorage.removeItem(SCROLL_KEY);
+    }
 }
 
 // Tasks
