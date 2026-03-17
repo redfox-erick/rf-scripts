@@ -82,6 +82,12 @@ Responsable de:
 3. **Refactorización de lógica de tooltips**:
    - Lógica de tooltips optimizada en `functions.js` para mejorar la legibilidad y reutilización.
 
+5. **Pantalla completa** ✅:
+   - Botón flotante inyectado en `#gantt_here` tras `gantt.init()`.
+   - Usa la API nativa del navegador (`requestFullscreen` / `exitFullscreen`).
+   - Etiqueta del botón cambia entre "⛶ Pantalla completa" y "✕ Salir".
+   - `gantt.render()` se llama en `fullscreenchange` para refluir el layout.
+
 4. **Columnas dinámicas con resize** ✅:
    - `gantt.config.keep_grid_width = false` para permitir resize independiente por columna.
    - `resize: true` añadido a todas las columnas (excepto el botón `add`).

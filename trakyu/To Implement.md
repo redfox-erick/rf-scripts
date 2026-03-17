@@ -19,7 +19,7 @@ Allow the user to resize all grid columns by dragging.
 - Save column widths per user using `localStorage` (no backend needed, zero cost).
 - On load, restore saved widths if they exist.
 
-### 2. ⬜ Pantalla completa
+### 2. ✅ Pantalla completa
 Toggle the Gantt into fullscreen mode.
 - Button rendered inside the Gantt (via `gantt.config.buttons_left` or a custom toolbar element).
 - Use the native browser Fullscreen API (`requestFullscreen` / `exitFullscreen`) on the `#gantt_here` container.
