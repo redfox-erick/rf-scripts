@@ -87,42 +87,65 @@
   color: #f97066;
 }
 
-/* Botones flotantes del Gantt (pantalla completa, curva S) */
-#gantt-fullscreen-btn,
-#gantt-scurve-btn {
+/* ===== Horizontal Toolbar ===== */
+#gantt-toolbar {
     position: absolute;
-    right: 8px;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 34px;
     z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 8px;
+    background: #fff;
+    border-bottom: 1px solid #d0d5dd;
+    box-sizing: border-box;
+}
+
+.gantt-toolbar-sep {
+    width: 1px;
+    height: 20px;
+    background: #d0d5dd;
+    flex-shrink: 0;
+    margin: 0 2px;
+}
+
+/* All single toolbar buttons */
+#gantt-toolbar > button {
     background: #fff;
     border: 1px solid #d0d5dd;
     border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 13px;
+    padding: 3px 10px;
+    font-size: 12px;
     cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     transition: background 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
-#gantt-fullscreen-btn { top: 8px; }
-#gantt-scurve-btn     { top: 42px; }
+#gantt-toolbar > button:hover { background: #f2f4f7; }
 
-/* Zoom button group */
-#gantt-zoom-group {
-    position: absolute;
-    top: 76px;
-    right: 8px;
-    z-index: 100;
+/* Button groups inside toolbar */
+#gantt-toolbar #gantt-zoom-group,
+#gantt-toolbar #gantt-tree-group {
+    position: static;
     display: flex;
     border: 1px solid #d0d5dd;
     border-radius: 6px;
     overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    flex-shrink: 0;
 }
+
+/* zoom/tree buttons inside groups */
 .gantt-zoom-btn {
     background: #fff;
     border: none;
     border-left: 1px solid #d0d5dd;
-    padding: 4px 10px;
-    font-size: 14px;
+    padding: 3px 8px;
+    font-size: 13px;
     cursor: pointer;
     transition: background 0.15s;
     line-height: 1;
@@ -130,59 +153,18 @@
 .gantt-zoom-btn:first-child { border-left: none; }
 .gantt-zoom-btn:hover { background: #f2f4f7; }
 
-/* Hide/show grid button */
-#gantt-grid-btn {
-    position: absolute;
-    top: 178px;
-    right: 8px;
-    z-index: 100;
-    background: #fff;
-    border: 1px solid #d0d5dd;
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 13px;
-    cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    transition: background 0.15s;
+/* Active states */
+#gantt-toolbar #gantt-scurve-btn.active {
+    background: #36ac81;
+    color: #fff;
+    border-color: #36ac81;
 }
-#gantt-grid-btn:hover { background: #f2f4f7; }
-#gantt-grid-btn.active {
+#gantt-toolbar #gantt-baseline-btn.active {
     background: #1d5f47;
     color: #fff;
     border-color: #1d5f47;
 }
-
-/* Open All / Close All button group */
-#gantt-tree-group {
-    position: absolute;
-    top: 212px;
-    right: 8px;
-    z-index: 100;
-    display: flex;
-    border: 1px solid #d0d5dd;
-    border-radius: 6px;
-    overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-
-/* Columns toggle button */
-/* Baseline toggle button */
-#gantt-baseline-btn {
-    position: absolute;
-    top: 144px;
-    right: 8px;
-    z-index: 100;
-    background: #fff;
-    border: 1px solid #d0d5dd;
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 13px;
-    cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    transition: background 0.15s;
-}
-#gantt-baseline-btn:hover { background: #f2f4f7; }
-#gantt-baseline-btn.active {
+#gantt-toolbar #gantt-grid-btn.active {
     background: #1d5f47;
     color: #fff;
     border-color: #1d5f47;
@@ -211,26 +193,10 @@
     opacity: 0.8;
 }
 
-#gantt-col-btn {
-    position: absolute;
-    top: 110px;
-    right: 8px;
-    z-index: 100;
-    background: #fff;
-    border: 1px solid #d0d5dd;
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 13px;
-    cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    transition: background 0.15s;
-}
-#gantt-col-btn:hover { background: #f2f4f7; }
-
 /* Columns dropdown */
 #gantt-col-dropdown {
     position: absolute;
-    top: 140px;
+    top: 34px;
     right: 8px;
     z-index: 101;
     background: #fff;
@@ -251,16 +217,6 @@
 }
 .gantt-col-row:hover { background: #f2f4f7; }
 .gantt-col-row input { cursor: pointer; margin: 0; }
-
-#gantt-fullscreen-btn:hover,
-#gantt-scurve-btn:hover {
-    background: #f2f4f7;
-}
-#gantt-scurve-btn.active {
-    background: #36ac81;
-    color: #fff;
-    border-color: #36ac81;
-}
 
 /* S-curve full-coverage panel */
 #scurve-panel {
@@ -296,9 +252,7 @@
     font-size: 11px;
     cursor: pointer;
 }
-#scurve-close-btn:hover {
-    background: #f2f4f7;
-}
+#scurve-close-btn:hover { background: #f2f4f7; }
 
 #scurve-canvas {
     flex: 1;
@@ -307,20 +261,20 @@
 
 /* Estilos base para el Tooltip */
 #bubble-tooltip {
-    visibility: hidden; /* Inicialmente oculto */
+    visibility: hidden;
     opacity: 0;
-    position: absolute; /* Debe ser absoluto para flotar sobre el contenido */
-    z-index: 1000; /* Asegura que esté por encima de otros elementos de Bubble */
+    position: absolute;
+    z-index: 1000;
     background-color: #333333;
     color: #ffffff;
     text-align: center;
     padding: 8px 12px;
-    border-radius: 8px; /* Bordes redondeados */
+    border-radius: 8px;
     font-size: 14px;
     line-height: 1.4;
-    transition: opacity 0.3s ease, transform 0.3s ease; /* Transición suave */
-    pointer-events: none; /* No debe interferir con clics */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Sombra elegante */
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     max-width: 250px;
 }
 
@@ -328,7 +282,7 @@
 #bubble-tooltip::after {
     content: "";
     position: absolute;
-    top: 100%; /* Posiciona la flecha en la parte inferior del tooltip */
+    top: 100%;
     left: 50%;
     margin-left: -5px;
     border-width: 5px;
@@ -340,5 +294,5 @@
 .tooltip-visible {
     visibility: visible !important;
     opacity: 1 !important;
-    transform: translateY(-5px); /* Efecto "pop-up" */
+    transform: translateY(-5px);
 }

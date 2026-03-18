@@ -270,16 +270,27 @@ function initGantt() {
         return;
     }
 
-    // --- Floating controls ---
+    // --- Toolbar ---
     (function() {
         var container = document.getElementById("gantt_here");
         container.style.position = "relative";
 
-        // Fullscreen button
+        // Create toolbar
+        var toolbar = document.createElement("div");
+        toolbar.id = "gantt-toolbar";
+        container.appendChild(toolbar);
+
+        function makeSep() {
+            var sep = document.createElement("div");
+            sep.className = "gantt-toolbar-sep";
+            return sep;
+        }
+
+        // 1. Fullscreen button
         var fsBtn = document.createElement("button");
         fsBtn.id = "gantt-fullscreen-btn";
         fsBtn.textContent = "⛶ Pantalla completa";
-        container.appendChild(fsBtn);
+        toolbar.appendChild(fsBtn);
 
         fsBtn.addEventListener("click", function() {
             if (!document.fullscreenElement) {
@@ -294,7 +305,14 @@ function initGantt() {
             gantt.render();
         });
 
-        // Zoom button group
+        // Sentinel slot — scurve.js and baselines.js insertBefore this
+        toolbar.appendChild(makeSep());
+        var toolbarSlot = document.createElement("span");
+        toolbarSlot.id = "gantt-toolbar-slot";
+        toolbar.appendChild(toolbarSlot);
+
+        // 2. Zoom group
+        toolbar.appendChild(makeSep());
         var zoomGroup = document.createElement("div");
         zoomGroup.id = "gantt-zoom-group";
 
@@ -319,14 +337,55 @@ function initGantt() {
         zoomGroup.appendChild(zoomOut);
         zoomGroup.appendChild(zoomFit);
         zoomGroup.appendChild(zoomIn);
-        container.appendChild(zoomGroup);
+        toolbar.appendChild(zoomGroup);
 
-        // Columns toggle button + dropdown
+        // 3. Tree expand/collapse group
+        toolbar.appendChild(makeSep());
+        var treeGroup = document.createElement("div");
+        treeGroup.id = "gantt-tree-group";
+
+        var openAll = document.createElement("button");
+        openAll.className = "gantt-zoom-btn";
+        openAll.textContent = "▶ Todo";
+        openAll.title = "Expandir todo";
+        openAll.addEventListener("click", function() {
+            gantt.eachTask(function(t) { if (gantt.hasChild(t.id)) gantt.open(t.id); });
+            saveOpenTasks();
+        });
+
+        var closeAll = document.createElement("button");
+        closeAll.className = "gantt-zoom-btn";
+        closeAll.textContent = "▼ Todo";
+        closeAll.title = "Contraer todo";
+        closeAll.addEventListener("click", function() {
+            gantt.eachTask(function(t) { if (gantt.hasChild(t.id)) gantt.close(t.id); });
+            saveOpenTasks();
+        });
+
+        treeGroup.appendChild(openAll);
+        treeGroup.appendChild(closeAll);
+        toolbar.appendChild(treeGroup);
+
+        // 4. Columns toggle button
+        toolbar.appendChild(makeSep());
         var colBtn = document.createElement("button");
         colBtn.id = "gantt-col-btn";
         colBtn.textContent = "☰ Columnas";
-        container.appendChild(colBtn);
+        toolbar.appendChild(colBtn);
 
+        // 5. Grid toggle button
+        var gridBtn = document.createElement("button");
+        gridBtn.id = "gantt-grid-btn";
+        gridBtn.textContent = "⊞ Ocultar columnas";
+        gridBtn.addEventListener("click", function() {
+            gantt.config.show_grid = !gantt.config.show_grid;
+            gantt.render();
+            gridBtn.textContent = gantt.config.show_grid ? "⊞ Ocultar columnas" : "⊞ Mostrar columnas";
+            gridBtn.classList.toggle("active", !gantt.config.show_grid);
+        });
+        toolbar.appendChild(gridBtn);
+
+        // Column dropdown — child of container so top:34px is relative to #gantt_here
         var colDropdown = document.createElement("div");
         colDropdown.id = "gantt-col-dropdown";
         colDropdown.style.display = "none";
@@ -358,44 +417,6 @@ function initGantt() {
         });
 
         container.appendChild(colDropdown);
-
-        // Hide/show grid toggle button
-        var gridBtn = document.createElement("button");
-        gridBtn.id = "gantt-grid-btn";
-        gridBtn.textContent = "⊞ Ocultar columnas";
-        gridBtn.addEventListener("click", function() {
-            gantt.config.show_grid = !gantt.config.show_grid;
-            gantt.render();
-            gridBtn.textContent = gantt.config.show_grid ? "⊞ Ocultar columnas" : "⊞ Mostrar columnas";
-            gridBtn.classList.toggle("active", !gantt.config.show_grid);
-        });
-        container.appendChild(gridBtn);
-
-        // Open All / Close All button group
-        var treeGroup = document.createElement("div");
-        treeGroup.id = "gantt-tree-group";
-
-        var openAll = document.createElement("button");
-        openAll.className = "gantt-zoom-btn";
-        openAll.textContent = "▶ Todo";
-        openAll.title = "Expandir todo";
-        openAll.addEventListener("click", function() {
-            gantt.eachTask(function(t) { if (gantt.hasChild(t.id)) gantt.open(t.id); });
-            saveOpenTasks();
-        });
-
-        var closeAll = document.createElement("button");
-        closeAll.className = "gantt-zoom-btn";
-        closeAll.textContent = "▼ Todo";
-        closeAll.title = "Contraer todo";
-        closeAll.addEventListener("click", function() {
-            gantt.eachTask(function(t) { if (gantt.hasChild(t.id)) gantt.close(t.id); });
-            saveOpenTasks();
-        });
-
-        treeGroup.appendChild(openAll);
-        treeGroup.appendChild(closeAll);
-        container.appendChild(treeGroup);
 
         colBtn.addEventListener("click", function(e) {
             e.stopPropagation();

@@ -281,7 +281,14 @@ window.initSCurve = function() {
     var toggleBtn = document.createElement("button");
     toggleBtn.id = "gantt-scurve-btn";
     toggleBtn.textContent = "📈 Curva S";
-    ganttContainer.appendChild(toggleBtn);
+    var slot = document.getElementById("gantt-toolbar-slot");
+    if (slot) {
+        slot.parentNode.insertBefore(toggleBtn, slot);
+    } else {
+        var tb = document.getElementById("gantt-toolbar");
+        if (tb) tb.appendChild(toggleBtn);
+        else ganttContainer.appendChild(toggleBtn);
+    }
 
     toggleBtn.addEventListener("click", function() {
         if (panel) {

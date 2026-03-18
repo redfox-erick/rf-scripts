@@ -143,7 +143,14 @@ window.initBaselines = function() {
     var btn = document.createElement("button");
     btn.id = "gantt-baseline-btn";
     btn.textContent = "📐 Baseline";
-    container.appendChild(btn);
+    var slot = document.getElementById("gantt-toolbar-slot");
+    if (slot) {
+        slot.parentNode.insertBefore(btn, slot);
+    } else {
+        var tb = document.getElementById("gantt-toolbar");
+        if (tb) tb.appendChild(btn);
+        else container.appendChild(btn);
+    }
 
     btn.addEventListener("click", function() {
         if (isVisible) {
