@@ -1,6 +1,11 @@
 // Configuración inicial del Gantt
 console.log("[Gantt] init.js loaded");
 
+// Guard: define isCompleted and calcularAvance here so templates work regardless
+// of whether functions.js has loaded yet. functions.js will redefine them — that's fine.
+function isCompleted(task) { return task.progress >= 1; }
+function calcularAvance(task) { return Math.round((task.progress || 0) * 100); }
+
 // Fix #1: Single plugins() call — second call was overwriting the first, losing quick_info/tool_tip/marker/export_api
 gantt.plugins({ quick_info: true, tool_tip: true, marker: true, export_api: true, auto_scheduling: true, undo: true });
 
