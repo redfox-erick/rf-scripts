@@ -120,12 +120,12 @@ gantt.attachEvent("onTaskClosed", function() { saveOpenTasks(); });
 gantt.config.layout = {
   css: "gantt_container",
   rows: [
+    { html: "<div id='gantt-toolbar-row'></div>", height: 34 },
     {
       cols: [
         { view: "grid", group: "vertical", scrollY: "scrollVer" },
         { resizer: true, width: 1 },
         {
-          // Fix #2: scrollbar must come after the timeline, not before
           rows: [
             { view: "timeline", scrollX: "scrollHor", scrollY: "scrollVer" },
             { view: "scrollbar", id: "scrollHor", group: "horizontal" }
@@ -275,10 +275,11 @@ function initGantt() {
         var container = document.getElementById("gantt_here");
         container.style.position = "relative";
 
-        // Create toolbar
+        // Create toolbar inside the DHTMLX layout row
+        var toolbarRow = document.getElementById("gantt-toolbar-row");
         var toolbar = document.createElement("div");
         toolbar.id = "gantt-toolbar";
-        container.appendChild(toolbar);
+        toolbarRow.appendChild(toolbar);
 
         function makeSep() {
             var sep = document.createElement("div");
