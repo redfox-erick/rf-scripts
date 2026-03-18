@@ -130,10 +130,32 @@
 .gantt-zoom-btn:first-child { border-left: none; }
 .gantt-zoom-btn:hover { background: #f2f4f7; }
 
+/* Hide/show grid button */
+#gantt-grid-btn {
+    position: absolute;
+    top: 178px;
+    right: 8px;
+    z-index: 100;
+    background: #fff;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    transition: background 0.15s;
+}
+#gantt-grid-btn:hover { background: #f2f4f7; }
+#gantt-grid-btn.active {
+    background: #1d5f47;
+    color: #fff;
+    border-color: #1d5f47;
+}
+
 /* Open All / Close All button group */
 #gantt-tree-group {
     position: absolute;
-    top: 178px;
+    top: 212px;
     right: 8px;
     z-index: 100;
     display: flex;

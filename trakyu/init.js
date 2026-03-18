@@ -359,6 +359,18 @@ function initGantt() {
 
         container.appendChild(colDropdown);
 
+        // Hide/show grid toggle button
+        var gridBtn = document.createElement("button");
+        gridBtn.id = "gantt-grid-btn";
+        gridBtn.textContent = "⊞ Ocultar columnas";
+        gridBtn.addEventListener("click", function() {
+            gantt.config.show_grid = !gantt.config.show_grid;
+            gantt.render();
+            gridBtn.textContent = gantt.config.show_grid ? "⊞ Ocultar columnas" : "⊞ Mostrar columnas";
+            gridBtn.classList.toggle("active", !gantt.config.show_grid);
+        });
+        container.appendChild(gridBtn);
+
         // Open All / Close All button group
         var treeGroup = document.createElement("div");
         treeGroup.id = "gantt-tree-group";
