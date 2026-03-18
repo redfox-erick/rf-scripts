@@ -94,6 +94,43 @@ window.initSCurve = function() {
         return { planned: cumulativePlanned, real: cumulativeReal, predicted: cumulativePredicted };
     }
 
+    function getBaselineLine() {
+        if (!window.BUBBLE_BASELINE_TASKS || !window.BUBBLE_BASELINE_TASKS.length) return null;
+
+        var scale = gantt.getScale();
+        var step  = scale.unit;
+        var timegrid = {};
+
+        window.BUBBLE_BASELINE_TASKS.forEach(function(bt) {
+            var startDate = new Date(bt.start_date);
+            var endDate   = new Date(bt.end_date);
+            if (!startDate || !endDate || startDate >= endDate) return;
+
+            var currDate = gantt.date[step + "_start"](new Date(startDate));
+            while (currDate < endDate) {
+                currDate = gantt.date.add(currDate, 1, step);
+                var ts = currDate.valueOf();
+                if (!timegrid[ts]) timegrid[ts] = 0;
+                timegrid[ts] += 1;
+            }
+        });
+
+        var chartScale = getChartScaleRange();
+        var cumulative = [];
+        var total = 0;
+        chartScale.forEach(function(d) {
+            total += (timegrid[d.valueOf()] || 0);
+            cumulative.push(total);
+        });
+
+        if (total > 0) {
+            for (var i = 0; i < cumulative.length; i++) {
+                cumulative[i] = Math.round(cumulative[i] / total * 100);
+            }
+        }
+        return cumulative;
+    }
+
     // ---- Panel show/hide ----
 
     function showSCurve() {
@@ -125,7 +162,54 @@ window.initSCurve = function() {
 
         var chartScale = getChartScaleRange();
         var scaleLabels = chartScale.map(function(d) { return dateToStr(d); });
-        var values = getProgressLine();
+        var values   = getProgressLine();
+        var baseline = getBaselineLine();
+
+        var datasets = [];
+
+        if (baseline) {
+            datasets.push({
+                label: "Baseline",
+                borderColor: "#f59e0b",
+                backgroundColor: "transparent",
+                data: baseline,
+                borderDash: [6, 4],
+                fill: false,
+                cubicInterpolationMode: "monotone",
+                pointRadius: 0
+            });
+        }
+
+        datasets.push(
+            {
+                label: "Teórico",
+                borderColor: "#2563eb",
+                backgroundColor: "rgba(37,99,235,0.08)",
+                data: values.planned,
+                fill: true,
+                cubicInterpolationMode: "monotone",
+                pointRadius: 0
+            },
+            {
+                label: "Real",
+                borderColor: "#36ac81",
+                backgroundColor: "rgba(54,172,129,0.08)",
+                data: values.real,
+                fill: true,
+                cubicInterpolationMode: "monotone",
+                pointRadius: 0
+            },
+            {
+                label: "Proyectado",
+                borderColor: "#36ac81",
+                backgroundColor: "transparent",
+                data: values.predicted,
+                borderDash: [6, 4],
+                fill: false,
+                cubicInterpolationMode: "monotone",
+                pointRadius: 0
+            }
+        );
 
         if (myChart) myChart.destroy();
 
@@ -133,36 +217,7 @@ window.initSCurve = function() {
             type: "line",
             data: {
                 labels: scaleLabels,
-                datasets: [
-                    {
-                        label: "Planificado",
-                        borderColor: "#2563eb",
-                        backgroundColor: "rgba(37,99,235,0.08)",
-                        data: values.planned,
-                        fill: true,
-                        cubicInterpolationMode: "monotone",
-                        pointRadius: 0
-                    },
-                    {
-                        label: "Real",
-                        borderColor: "#36ac81",
-                        backgroundColor: "rgba(54,172,129,0.08)",
-                        data: values.real,
-                        fill: true,
-                        cubicInterpolationMode: "monotone",
-                        pointRadius: 0
-                    },
-                    {
-                        label: "Proyectado",
-                        borderColor: "#36ac81",
-                        backgroundColor: "transparent",
-                        data: values.predicted,
-                        borderDash: [6, 4],
-                        fill: false,
-                        cubicInterpolationMode: "monotone",
-                        pointRadius: 0
-                    }
-                ]
+                datasets: datasets
             },
             options: {
                 responsive: true,
