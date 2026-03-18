@@ -16,9 +16,15 @@
   cursor: not-allowed;
 }
 
+/* faded green row background for completed tasks */
+.gantt_row.task_completed,
+.gantt_task_row.task_completed {
+    background: rgba(54, 172, 129, 0.07);
+}
+
 /* green check in grid column */
 .task-done-check {
-  color: #1d5f47;
+  color: #36ac81;
   font-weight: bold;
   margin-right: 2px;
 }
