@@ -165,6 +165,7 @@ gantt.config.columns = [
 ];
 
 gantt.templates.task_text = function(start, end, task){
+  if (gantt.hasChild(task.id) || task.type === gantt.config.types.project) return "";
   return task.text;
 };
 

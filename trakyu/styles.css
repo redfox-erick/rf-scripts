@@ -7,8 +7,8 @@
 
 /* barra */
 .gantt_task_line{
-  background: #36ac81;
-  border-color: #36ac81;
+  background: #c8cdd5;
+  border-color: #9ca3af;
 }
 
 /* completed tasks — lock cursor on bar */
@@ -23,15 +23,46 @@
   margin-right: 2px;
 }
 
-/* parent tasks, project type, and milestones */
+/* parent / project tasks — MS Project-style summary bar */
 .gantt_task_line.task-parent {
   background: #1d5f47;
   border-color: #1d5f47;
+  border-radius: 0;
+  height: 8px !important;
+  overflow: visible;
+}
+.gantt_task_line.task-parent .gantt_task_progress,
+.gantt_task_line.task-parent .gantt_task_content {
+  display: none;
+}
+/* left downward triangle */
+.gantt_task_line.task-parent::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 8px 7px 0 0;
+  border-color: #1d5f47 transparent transparent transparent;
+}
+/* right downward triangle */
+.gantt_task_line.task-parent::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 8px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 8px 0 0 7px;
+  border-color: #1d5f47 transparent transparent transparent;
 }
 
 /* progreso dentro de la barra */
 .gantt_task_progress{
-  background: rgba(14,165,233,.6);
+  background: #36ac81;
 }
 
 /* El puntito/bullet (en algunas versiones es gantt_qi_title_bar) */
