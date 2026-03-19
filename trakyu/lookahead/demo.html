@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lookahead — Prototipo</title>
+
+    <!-- vis-timeline -->
+    <link href="https://unpkg.com/vis-timeline@7.7.3/styles/vis-timeline-graph2d.min.css" rel="stylesheet">
+
+    <!-- Lookahead styles -->
+    <link href="lookahead.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- =====================================================
+     MOCK DATA — in Bubble, these globals are set by the
+     platform before the HTML element loads the scripts.
+     ===================================================== -->
+<script>
+    // Lookahead period
+    window.BUBBLE_LOOKAHEAD_WEEKS = 4;
+    window.BUBBLE_LOOKAHEAD_START = "2026-03-16"; // Monday
+
+    // Rows on the timeline (zones / floors / areas)
+    window.BUBBLE_LOOKAHEAD_GROUPS = [
+        { id: "g1", content: "Fundación",     order: 1 },
+        { id: "g2", content: "Estructura L1", order: 2 },
+        { id: "g3", content: "Estructura L2", order: 3 },
+        { id: "g4", content: "MEP",           order: 4 },
+        { id: "g5", content: "Acabados",      order: 5 }
+    ];
+
+    // Task pool — the lookahead backlog (from Bubble)
+    window.BUBBLE_LOOKAHEAD_TASKS = [
+        { id: "t1", text: "Colada de Losa",         category: "CONCRETO",  duration: 3, color: "#f59e0b" },
+        { id: "t2", text: "Estructura de Acero",     category: "ESTRUCTURA",duration: 5, color: "#3b82f6" },
+        { id: "t3", text: "HVAC Zona B",             category: "MEP",       duration: 4, color: "#8b5cf6" },
+        { id: "t4", text: "Conduit Eléctrico",       category: "ELÉCTRICO", duration: 2, color: "#06b6d4" },
+        { id: "t5", text: "Stack de Plomería",       category: "PLOMERÍA",  duration: 3, color: "#36ac81" },
+        { id: "t6", text: "Muros Interiores L1",     category: "MAMPOSTERÍA",duration: 4,color: "#f97316" },
+        { id: "t7", text: "Instalación Ventanas",    category: "ACABADOS",  duration: 2, color: "#ec4899" },
+        { id: "t8", text: "Cimentación Bloque B",    category: "CONCRETO",  duration: 6, color: "#f59e0b" }
+    ];
+
+    // Already-placed items (from a previous session or saved state)
+    window.BUBBLE_LOOKAHEAD_ITEMS = [];
+</script>
+
+<!-- HTML structure -->
+<div id="lookahead-container">
+
+    <!-- Left sidebar — task pool -->
+    <div id="lookahead-sidebar">
+        <div id="lookahead-sidebar-header">
+            <span>Tareas disponibles</span>
+            Arrastra al cronograma →
+        </div>
+        <div id="lookahead-task-list">
+            <!-- Populated by lookahead.js -->
+        </div>
+    </div>
+
+    <!-- Right panel — timeline -->
+    <div id="lookahead-main">
+        <div id="lookahead-toolbar">
+            <span class="toolbar-title">📅 Lookahead</span>
+
+            <span class="period-label">Periodo:</span>
+            <select id="lookahead-period-select" class="period-select">
+                <option value="2">2 semanas</option>
+                <option value="4" selected>4 semanas</option>
+                <option value="6">6 semanas</option>
+                <option value="8">8 semanas</option>
+            </select>
+
+            <button class="lookahead-toolbar-btn" onclick="clearAll()">✕ Limpiar</button>
+            <button id="lookahead-commit-btn" class="lookahead-toolbar-btn">✓ Commit</button>
+        </div>
+
+        <div id="lookahead-timeline">
+            <div id="drop-hint">Suelta aquí para programar la tarea</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- vis-timeline -->
+<script src="https://unpkg.com/vis-timeline@7.7.3/standalone/umd/vis-timeline-graph2d.min.js"></script>
+
+<!-- Lookahead logic -->
+<script src="lookahead.js"></script>
+
+<!-- Demo helpers -->
+<script>
+    // Simulate bubble_fn_* callbacks — just log to console in demo mode
+    function bubble_fn_placeTask(data) {
+        console.log("[Bubble callback] placeTask:", data);
+    }
+    function bubble_fn_updatePlacedTask(data) {
+        console.log("[Bubble callback] updatePlacedTask:", data);
+    }
+    function bubble_fn_removePlacedTask(data) {
+        console.log("[Bubble callback] removePlacedTask:", data);
+    }
+    function bubble_fn_commitLookahead(data) {
+        console.log("[Bubble callback] commitLookahead:", data);
+        alert("✓ Commit enviado a Bubble — " + data.outputlist1.length + " tareas.\nRevisa la consola para ver los datos.");
+    }
+
+    function clearAll() {
+        if (!confirm("¿Limpiar todas las tareas del cronograma?")) return;
+        window.refreshLookahead && window.refreshLookahead();
+        window.BUBBLE_LOOKAHEAD_ITEMS = [];
+        window.refreshLookahead && window.refreshLookahead();
+    }
+</script>
+
+</body>
+</html>
