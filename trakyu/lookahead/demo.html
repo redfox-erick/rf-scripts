@@ -3,116 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lookahead — Prototipo</title>
-
-    <!-- vis-timeline -->
+    <title>Lookahead — Demo</title>
     <link href="https://unpkg.com/vis-timeline@7.7.3/styles/vis-timeline-graph2d.min.css" rel="stylesheet">
-
-    <!-- Lookahead styles -->
     <link href="lookahead.css" rel="stylesheet">
+    <style>
+        /* ----------------------------------------------------------------
+           Everything below simulates what Bubble will render natively.
+           In production, Bubble owns: layout, sidebar, toolbar, list cards.
+           This JS/CSS file (lookahead.js / lookahead.css) owns: only the
+           timeline inside #lookahead-timeline.
+           ---------------------------------------------------------------- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 13px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; background: #f8fafc; }
+
+        /* Simulated Bubble toolbar */
+        .bubble-toolbar {
+            height: 48px; background: #fff; border-bottom: 1px solid #e2e8f0;
+            display: flex; align-items: center; padding: 0 16px; gap: 10px; flex-shrink: 0;
+        }
+        .bubble-toolbar h2 { font-size: 15px; font-weight: 600; color: #1e293b; flex: 1; }
+        .bubble-toolbar select, .bubble-toolbar button {
+            border: 1px solid #d0d5dd; border-radius: 6px; padding: 5px 12px;
+            font-size: 12px; background: #fff; cursor: pointer; color: #374151;
+        }
+        .bubble-toolbar button.commit { background: #1d5f47; color: #fff; border-color: #1d5f47; font-weight: 600; }
+        .bubble-toolbar button:hover { background: #f1f5f9; }
+        .bubble-toolbar button.commit:hover { background: #164d38; }
+
+        /* Simulated Bubble layout: sidebar + timeline */
+        .bubble-layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* Simulated Bubble sidebar */
+        .bubble-sidebar {
+            width: 260px; flex-shrink: 0; background: #1a1f2e;
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        .bubble-sidebar-title {
+            padding: 12px 16px; font-size: 12px; font-weight: 600;
+            color: #94a3b8; border-bottom: 1px solid rgba(255,255,255,0.07);
+            flex-shrink: 0;
+        }
+        .bubble-sidebar-title span { display: block; font-size: 14px; color: #e2e8f0; margin-bottom: 2px; }
+        .bubble-task-list { flex: 1; overflow-y: auto; padding: 10px 12px; }
+
+        /* Simulated Bubble repeating group cell */
+        .bubble-cell {
+            background: #252d3d; border-radius: 8px; padding: 10px 12px;
+            margin-bottom: 8px; border-left: 3px solid #36ac81;
+            position: relative; /* needed for the draggable overlay */
+        }
+        .bubble-cell-category { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-bottom: 3px; }
+        .bubble-cell-name { font-size: 13px; font-weight: 500; color: #e2e8f0; margin-bottom: 5px; }
+        .bubble-cell-duration { font-size: 11px; color: #64748b; background: rgba(255,255,255,0.07); border-radius: 4px; padding: 1px 6px; display: inline-block; }
+
+        /* THE DRAGGABLE OVERLAY — this is what Bubble puts inside each cell via an HTML element */
+        .lookahead-draggable {
+            position: absolute; inset: 0; cursor: grab; border-radius: 8px;
+        }
+        .lookahead-draggable:active { cursor: grabbing; }
+
+        /* Timeline wrapper */
+        .bubble-timeline-wrapper { flex: 1; overflow: hidden; }
+    </style>
 </head>
 <body>
 
-<!-- =====================================================
-     MOCK DATA — in Bubble, these globals are set by the
-     platform before the HTML element loads the scripts.
-     ===================================================== -->
+<!-- ================================================================
+     MOCK GLOBALS — in Bubble, these are set before the HTML element
+     ================================================================ -->
 <script>
-    // Lookahead period
-    window.BUBBLE_LOOKAHEAD_WEEKS = 4;
-    window.BUBBLE_LOOKAHEAD_START = "2026-03-16"; // Monday
-
-    // Rows on the timeline (zones / floors / areas)
+    window.BUBBLE_LOOKAHEAD_WEEKS  = 4;
+    window.BUBBLE_LOOKAHEAD_START  = "2026-03-17";
     window.BUBBLE_LOOKAHEAD_GROUPS = [
-        { id: "g1", content: "Fundación",     order: 1 },
-        { id: "g2", content: "Estructura L1", order: 2 },
-        { id: "g3", content: "Estructura L2", order: 3 },
-        { id: "g4", content: "MEP",           order: 4 },
-        { id: "g5", content: "Acabados",      order: 5 }
+        { id: "g1", content: "Fundación",      order: 1 },
+        { id: "g2", content: "Estructura L1",  order: 2 },
+        { id: "g3", content: "Estructura L2",  order: 3 },
+        { id: "g4", content: "MEP",            order: 4 },
+        { id: "g5", content: "Acabados",       order: 5 }
     ];
-
-    // Task pool — the lookahead backlog (from Bubble)
-    window.BUBBLE_LOOKAHEAD_TASKS = [
-        { id: "t1", text: "Colada de Losa",         category: "CONCRETO",  duration: 3, color: "#f59e0b" },
-        { id: "t2", text: "Estructura de Acero",     category: "ESTRUCTURA",duration: 5, color: "#3b82f6" },
-        { id: "t3", text: "HVAC Zona B",             category: "MEP",       duration: 4, color: "#8b5cf6" },
-        { id: "t4", text: "Conduit Eléctrico",       category: "ELÉCTRICO", duration: 2, color: "#06b6d4" },
-        { id: "t5", text: "Stack de Plomería",       category: "PLOMERÍA",  duration: 3, color: "#36ac81" },
-        { id: "t6", text: "Muros Interiores L1",     category: "MAMPOSTERÍA",duration: 4,color: "#f97316" },
-        { id: "t7", text: "Instalación Ventanas",    category: "ACABADOS",  duration: 2, color: "#ec4899" },
-        { id: "t8", text: "Cimentación Bloque B",    category: "CONCRETO",  duration: 6, color: "#f59e0b" }
-    ];
-
-    // Already-placed items (from a previous session or saved state)
     window.BUBBLE_LOOKAHEAD_ITEMS = [];
+
+    // Task pool — Bubble renders this as a repeating group
+    var MOCK_TASKS = [
+        { id: "t1", text: "Colada de Losa",       category: "CONCRETO",   duration: 3, color: "#f59e0b" },
+        { id: "t2", text: "Estructura de Acero",  category: "ESTRUCTURA", duration: 5, color: "#3b82f6" },
+        { id: "t3", text: "HVAC Zona B",          category: "MEP",        duration: 4, color: "#8b5cf6" },
+        { id: "t4", text: "Conduit Eléctrico",    category: "ELÉCTRICO",  duration: 2, color: "#06b6d4" },
+        { id: "t5", text: "Stack de Plomería",    category: "PLOMERÍA",   duration: 3, color: "#36ac81" },
+        { id: "t6", text: "Muros Interiores L1",  category: "MAMPOSTERÍA",duration: 4, color: "#f97316" },
+        { id: "t7", text: "Instalación Ventanas", category: "ACABADOS",   duration: 2, color: "#ec4899" },
+        { id: "t8", text: "Cimentación Bloque B", category: "CONCRETO",   duration: 6, color: "#f59e0b" }
+    ];
 </script>
 
-<!-- HTML structure -->
-<div id="lookahead-container">
+<!-- ================================================================
+     SIMULATED BUBBLE UI — toolbar + sidebar + timeline wrapper
+     ================================================================ -->
 
-    <!-- Left sidebar — task pool -->
-    <div id="lookahead-sidebar">
-        <div id="lookahead-sidebar-header">
+<!-- Bubble toolbar -->
+<div class="bubble-toolbar">
+    <h2>📅 Lookahead</h2>
+    <label style="font-size:12px;color:#64748b;">Periodo:</label>
+    <select onchange="window.setLookaheadPeriod && window.setLookaheadPeriod(+this.value)">
+        <option value="2">2 semanas</option>
+        <option value="4" selected>4 semanas</option>
+        <option value="6">6 semanas</option>
+        <option value="8">8 semanas</option>
+    </select>
+    <button onclick="window.clearLookahead && window.clearLookahead()">✕ Limpiar</button>
+    <button class="commit" onclick="window.commitLookahead && window.commitLookahead()">✓ Commit</button>
+</div>
+
+<div class="bubble-layout">
+
+    <!-- Bubble sidebar — repeating group of task cards -->
+    <div class="bubble-sidebar">
+        <div class="bubble-sidebar-title">
             <span>Tareas disponibles</span>
             Arrastra al cronograma →
         </div>
-        <div id="lookahead-task-list">
-            <!-- Populated by lookahead.js -->
+        <div class="bubble-task-list" id="mock-task-list">
+            <!-- populated below -->
         </div>
     </div>
 
-    <!-- Right panel — timeline -->
-    <div id="lookahead-main">
-        <div id="lookahead-toolbar">
-            <span class="toolbar-title">📅 Lookahead</span>
-
-            <span class="period-label">Periodo:</span>
-            <select id="lookahead-period-select" class="period-select">
-                <option value="2">2 semanas</option>
-                <option value="4" selected>4 semanas</option>
-                <option value="6">6 semanas</option>
-                <option value="8">8 semanas</option>
-            </select>
-
-            <button class="lookahead-toolbar-btn" onclick="clearAll()">✕ Limpiar</button>
-            <button id="lookahead-commit-btn" class="lookahead-toolbar-btn">✓ Commit</button>
-        </div>
-
-        <div id="lookahead-timeline">
-            <div id="drop-hint">Suelta aquí para programar la tarea</div>
-        </div>
+    <!-- Timeline — the only thing owned by lookahead.js -->
+    <div class="bubble-timeline-wrapper">
+        <div id="lookahead-timeline"></div>
     </div>
 
 </div>
 
+<!-- ================================================================
+     MOCK: build Bubble-style task cards with .lookahead-draggable overlay
+     ================================================================ -->
+<script>
+    var list = document.getElementById("mock-task-list");
+    MOCK_TASKS.forEach(function(task) {
+        var cell = document.createElement("div");
+        cell.className = "bubble-cell";
+        cell.style.borderLeftColor = task.color;
+        cell.innerHTML =
+            '<div class="bubble-cell-category">' + task.category + '</div>' +
+            '<div class="bubble-cell-name">' + task.text + '</div>' +
+            '<span class="bubble-cell-duration">⏱ ' + task.duration + ' días</span>' +
+            // ↓ This is the HTML element Bubble puts inside each cell
+            '<div class="lookahead-draggable"' +
+            '     draggable="true"' +
+            '     data-task-id="'       + task.id       + '"' +
+            '     data-task-text="'     + task.text     + '"' +
+            '     data-task-duration="' + task.duration + '"' +
+            '     data-task-color="'    + task.color    + '">' +
+            '</div>';
+        list.appendChild(cell);
+    });
+</script>
+
 <!-- vis-timeline -->
 <script src="https://unpkg.com/vis-timeline@7.7.3/standalone/umd/vis-timeline-graph2d.min.js"></script>
 
-<!-- Lookahead logic -->
+<!-- Our timeline logic -->
 <script src="lookahead.js"></script>
 
-<!-- Demo helpers -->
+<!-- Simulate bubble_fn_* callbacks -->
 <script>
-    // Simulate bubble_fn_* callbacks — just log to console in demo mode
-    function bubble_fn_placeTask(data) {
-        console.log("[Bubble callback] placeTask:", data);
-    }
-    function bubble_fn_updatePlacedTask(data) {
-        console.log("[Bubble callback] updatePlacedTask:", data);
-    }
-    function bubble_fn_removePlacedTask(data) {
-        console.log("[Bubble callback] removePlacedTask:", data);
-    }
-    function bubble_fn_commitLookahead(data) {
-        console.log("[Bubble callback] commitLookahead:", data);
-        alert("✓ Commit enviado a Bubble — " + data.outputlist1.length + " tareas.\nRevisa la consola para ver los datos.");
-    }
-
-    function clearAll() {
-        if (!confirm("¿Limpiar todas las tareas del cronograma?")) return;
-        window.refreshLookahead && window.refreshLookahead();
-        window.BUBBLE_LOOKAHEAD_ITEMS = [];
-        window.refreshLookahead && window.refreshLookahead();
+    function bubble_fn_placeTask(d)        { console.log("[Bubble] placeTask", d); }
+    function bubble_fn_updatePlacedTask(d) { console.log("[Bubble] updatePlacedTask", d); }
+    function bubble_fn_removePlacedTask(d) { console.log("[Bubble] removePlacedTask", d); }
+    function bubble_fn_commitLookahead(d)  {
+        console.log("[Bubble] commitLookahead", d);
+        alert("✓ Commit — " + d.outputlist1.length + " tareas programadas.\nVer consola para detalles.");
     }
 </script>
 
