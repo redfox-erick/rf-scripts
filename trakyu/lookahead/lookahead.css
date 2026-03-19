@@ -81,6 +81,28 @@
     border-bottom: 1px solid #f1f5f9 !important;
 }
 
+/* Locked state — timeline committed, editing disabled */
+#lookahead-timeline.lookahead-locked {
+    opacity: 0.85;
+    pointer-events: none; /* blocks all mouse interaction including drag */
+}
+#lookahead-timeline.lookahead-locked::after {
+    content: "🔒 Lookahead comprometido — solo lectura";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(29, 95, 71, 0.9);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 14px;
+    border-radius: 20px;
+    z-index: 20;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
 /* Weekend columns */
 .vis-time-axis .vis-grid.vis-saturday,
 .vis-time-axis .vis-grid.vis-sunday {

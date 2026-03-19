@@ -18,16 +18,19 @@
 //   </div>
 //
 // --- Bubble calls these functions via Run JavaScript ---
-//   window.setLookaheadPeriod(weeks)   — update visible window
-//   window.clearLookahead()            — remove all placed items
-//   window.commitLookahead()           — trigger commit callback
-//   window.refreshLookahead()          — reload from updated globals
+//   window.setLookaheadPeriod(weeks)    — update visible window
+//   window.setLookaheadLocked(bool)     — lock/unlock editing (call after commit or on load)
+//   window.clearLookahead()             — remove all placed items
+//   window.refreshLookahead()           — reload from updated globals
 //
 // --- Callbacks to Bubble ---
 //   bubble_fn_placeTask        { output1: itemId, output2: taskId, output3: groupId, output4: start, output5: end }
 //   bubble_fn_updatePlacedTask { output1: itemId, output2: groupId, output3: start, output4: end }
 //   bubble_fn_removePlacedTask { output1: itemId }
-//   bubble_fn_commitLookahead  { outputlist1: ids, outputlist2: taskIds, outputlist3: groupIds, outputlist4: starts, outputlist5: ends }
+//
+// NOTE: commit is a pure Bubble workflow — no JS callback needed.
+//   Bubble already has all data via the above callbacks in real-time.
+//   After committing, Bubble calls window.setLookaheadLocked(true).
 
 console.log("[Lookahead] lookahead.js loaded");
 
@@ -105,6 +108,7 @@ window.initLookahead = function() {
 
     // ---- Drop target: accept drags from Bubble's .lookahead-draggable elements ----
     container.addEventListener("dragover", function(e) {
+        if (_locked) { e.dataTransfer.dropEffect = "none"; return; }
         e.preventDefault();
         e.dataTransfer.dropEffect = "copy";
         container.classList.add("drop-active");
@@ -164,6 +168,21 @@ window.initLookahead = function() {
         e.dataTransfer.effectAllowed = "copy";
     });
 
+    // ---- Lock state ----
+    var _locked = window.BUBBLE_LOOKAHEAD_LOCKED === true;
+
+    function _applyLock(locked) {
+        _locked = locked;
+        timeline.setOptions({
+            editable: locked ? false : { updateTime: true, updateGroup: true, remove: true }
+        });
+        container.classList.toggle("lookahead-locked", locked);
+        console.log("[Lookahead] " + (locked ? "Locked — editing disabled" : "Unlocked — editing enabled"));
+    }
+
+    // Apply initial lock state if Bubble set it before init
+    if (_locked) _applyLock(true);
+
     // ---- Public API (called by Bubble via Run JavaScript) ----
 
     window.setLookaheadPeriod = function(weeks) {
@@ -171,22 +190,13 @@ window.initLookahead = function() {
         timeline.setWindow(startDate, newEnd, { animation: { duration: 400 } });
     };
 
-    window.clearLookahead = function() {
-        visItems.clear();
+    window.setLookaheadLocked = function(locked) {
+        _applyLock(!!locked);
     };
 
-    window.commitLookahead = function() {
-        var all = visItems.get();
-        console.log("[Lookahead] Commit — " + all.length + " items");
-        if (typeof bubble_fn_commitLookahead === "function") {
-            bubble_fn_commitLookahead({
-                outputlist1: all.map(function(i) { return i.id; }),
-                outputlist2: all.map(function(i) { return i.taskId; }),
-                outputlist3: all.map(function(i) { return String(i.group); }),
-                outputlist4: all.map(function(i) { return i.start; }),
-                outputlist5: all.map(function(i) { return i.end; })
-            });
-        }
+    window.clearLookahead = function() {
+        if (_locked) { console.warn("[Lookahead] Locked — clear blocked"); return; }
+        visItems.clear();
     };
 
     window.refreshLookahead = function() {

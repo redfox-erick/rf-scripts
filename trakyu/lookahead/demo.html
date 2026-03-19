@@ -111,7 +111,7 @@
         <option value="8">8 semanas</option>
     </select>
     <button onclick="window.clearLookahead && window.clearLookahead()">✕ Limpiar</button>
-    <button class="commit" onclick="window.commitLookahead && window.commitLookahead()">✓ Commit</button>
+    <button class="commit" id="btn-commit" onclick="toggleCommit()">✓ Commit</button>
 </div>
 
 <div class="bubble-layout">
@@ -170,9 +170,16 @@
     function bubble_fn_placeTask(d)        { console.log("[Bubble] placeTask", d); }
     function bubble_fn_updatePlacedTask(d) { console.log("[Bubble] updatePlacedTask", d); }
     function bubble_fn_removePlacedTask(d) { console.log("[Bubble] removePlacedTask", d); }
-    function bubble_fn_commitLookahead(d)  {
-        console.log("[Bubble] commitLookahead", d);
-        alert("✓ Commit — " + d.outputlist1.length + " tareas programadas.\nVer consola para detalles.");
+
+    var _committed = false;
+    function toggleCommit() {
+        _committed = !_committed;
+        window.setLookaheadLocked && window.setLookaheadLocked(_committed);
+        var btn = document.getElementById("btn-commit");
+        btn.textContent = _committed ? "↩ Reabrir" : "✓ Commit";
+        btn.style.background = _committed ? "#64748b" : "";
+        btn.style.borderColor = _committed ? "#64748b" : "";
+        console.log("[Bubble] Lookahead " + (_committed ? "committed — locked" : "reopened — unlocked"));
     }
 </script>
 
