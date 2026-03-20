@@ -31,6 +31,7 @@
         #timeline {
             flex: 1;
             overflow: hidden;
+            min-height: 0;
         }
 
         /* ---- vis-timeline overrides ---- */
@@ -212,7 +213,22 @@
     };
 
     var container = document.getElementById("timeline");
+
+    // Set explicit pixel height so vis-timeline can calculate layout correctly.
+    // flex:1 alone isn't picked up reliably at init time.
+    function setHeight() {
+        var h = window.innerHeight - 44 - 28; // minus toolbar + info bar
+        container.style.height = h + "px";
+    }
+    setHeight();
+
     var timeline = new vis.Timeline(container, items, options);
+
+    // Keep height in sync on resize and force a redraw
+    window.addEventListener("resize", function() {
+        setHeight();
+        timeline.redraw();
+    });
 
     // Show selection info
     timeline.on("select", function(props) {
