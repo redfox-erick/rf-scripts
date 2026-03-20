@@ -1,13 +1,18 @@
-/* Lookahead — timeline styles only. Sidebar and toolbar are Bubble's responsibility. */
+/* Lookahead — timeline styles.
+   Works for any container ID — no hardcoded #lookahead-timeline selectors
+   except as a convenience alias for Bubble's existing HTML element.
+   The factory adds the class .lookahead-container to every container it manages. */
 
-/* The HTML element in Bubble should be 100% width and height, position relative */
+/* ---- Container defaults ---- */
+.lookahead-container,
 #lookahead-timeline {
     width: 100%;
     height: 100%;
     position: relative;
 }
 
-/* Drop active state — shown while dragging over the timeline */
+/* ---- Drop active state ---- */
+.lookahead-container.drop-active::after,
 #lookahead-timeline.drop-active::after {
     content: "Suelta para programar";
     position: absolute;
@@ -24,23 +29,57 @@
     z-index: 10;
 }
 
+/* ---- Locked state ---- */
+.lookahead-container.lookahead-locked,
+#lookahead-timeline.lookahead-locked {
+    opacity: 0.85;
+    pointer-events: none;
+}
+.lookahead-container.lookahead-locked::after,
+#lookahead-timeline.lookahead-locked::after {
+    content: "🔒 Lookahead comprometido — solo lectura";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(29, 95, 71, 0.9);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 14px;
+    border-radius: 20px;
+    z-index: 20;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+/* ---- Period shading — grey outside the lookahead window ---- */
+.vis-item.vis-background.period-outside {
+    background: rgba(0, 0, 0, 0.055);
+    border: none;
+}
+
+/* ---- Period boundary lines (addCustomTime with id "*-period-start" / "*-period-end") ---- */
+.vis-custom-time[class*="-period-start"],
+.vis-custom-time[class*="-period-end"] {
+    background-color: #36ac81 !important;
+    width: 2px !important;
+    cursor: default !important;
+}
+.vis-custom-time[class*="-period-start"] .vis-custom-time-marker,
+.vis-custom-time[class*="-period-end"] .vis-custom-time-marker {
+    display: none;
+}
+
+/* ---- Items outside the period (dimmed) ---- */
+.vis-item.out-of-range {
+    opacity: 0.45 !important;
+}
+
 /* ===== vis-timeline overrides ===== */
 .vis-timeline {
     border: none !important;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-}
-
-.vis-label {
-    font-size: 12px !important;
-    font-weight: 500 !important;
-    color: #374151 !important;
-    padding-left: 12px !important;
-    display: flex;
-    align-items: center;
-}
-
-.vis-group {
-    border-bottom: 1px solid #f1f5f9 !important;
 }
 
 .vis-time-axis .vis-text {
@@ -70,37 +109,6 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-.vis-panel.vis-left {
-    border-right: 1px solid #e2e8f0 !important;
-    background: #f8fafc !important;
-}
-
-.vis-labelset .vis-label {
-    border-bottom: 1px solid #f1f5f9 !important;
-}
-
-/* Locked state — timeline committed, editing disabled */
-#lookahead-timeline.lookahead-locked {
-    opacity: 0.85;
-    pointer-events: none; /* blocks all mouse interaction including drag */
-}
-#lookahead-timeline.lookahead-locked::after {
-    content: "🔒 Lookahead comprometido — solo lectura";
-    position: absolute;
-    top: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(29, 95, 71, 0.9);
-    color: #fff;
-    font-size: 12px;
-    font-weight: 500;
-    padding: 4px 14px;
-    border-radius: 20px;
-    z-index: 20;
-    pointer-events: none;
-    white-space: nowrap;
 }
 
 /* Weekend columns */

@@ -1,254 +1,298 @@
-// Lookahead Timeline — vis-timeline
-// Owns ONLY the timeline. Sidebar, toolbar, commit, and period controls live in Bubble.
+// lookahead.js — reusable vis-timeline factory
 //
-// --- Bubble sets these globals before the HTML element loads ---
-//   window.BUBBLE_LOOKAHEAD_WEEKS   {number}  e.g. 4
-//   window.BUBBLE_LOOKAHEAD_START   {string}  e.g. "2026-03-16"
-//   window.BUBBLE_LOOKAHEAD_GROUPS  {array}   [{ id, content, order? }]
-//   window.BUBBLE_LOOKAHEAD_ITEMS   {array}   [{ id, taskId, groupId, start, end }]  ← already-placed
+// Usage:
+//   var tl = window.createLookaheadTimeline({
+//       containerId: "lookahead-timeline",   // required
+//       weeks:       4,                      // default: 4
+//       start:       "2026-03-17",           // Date or ISO string; default: current Monday
+//       items:       [],                     // [{id, taskId, start, end, text, color}]
+//       locked:      false,
+//       onPlace:     function(data) {},      // {output1:itemId, output2:taskId, output3:start, output4:end}
+//       onUpdate:    function(data) {},      // {output1:itemId, output2:start, output3:end}
+//       onRemove:    function(data) {}       // {output1:itemId}
+//   });
 //
-// --- Bubble makes list items draggable by including inside each cell ---
-//   <div class="lookahead-draggable"
-//        draggable="true"
-//        data-task-id="..."
-//        data-task-text="..."
-//        data-task-duration="3"
-//        data-task-color="#f59e0b"
-//        style="position:absolute;inset:0;cursor:grab;">
-//   </div>
+// Returns: { setPeriod(weeks), setLocked(bool), clear(), refresh(items), scrollTo(date) }
 //
-// --- Bubble calls these functions via Run JavaScript ---
-//   window.setLookaheadPeriod(weeks)    — update visible window
-//   window.setLookaheadLocked(bool)     — lock/unlock editing (call after commit or on load)
-//   window.clearLookahead()             — remove all placed items
-//   window.refreshLookahead()           — reload from updated globals
-//
-// --- Callbacks to Bubble ---
-//   bubble_fn_placeTask        { output1: itemId, output2: taskId, output3: groupId, output4: start, output5: end }
-//   bubble_fn_updatePlacedTask { output1: itemId, output2: groupId, output3: start, output4: end }
-//   bubble_fn_removePlacedTask { output1: itemId }
-//
-// NOTE: commit is a pure Bubble workflow — no JS callback needed.
-//   Bubble already has all data via the above callbacks in real-time.
-//   After committing, Bubble calls window.setLookaheadLocked(true).
+// Bubble integration:
+//   - Set globals before calling: window.BUBBLE_LOOKAHEAD_* (optional — pass directly via config instead)
+//   - The .lookahead-draggable drag source pattern works the same as before
+//   - After commit: tl.setLocked(true)
+//   - After data refresh: tl.refresh(newItemsArray)
 
 console.log("[Lookahead] lookahead.js loaded");
 
-window.initLookahead = function() {
-    if (typeof vis === "undefined") {
-        console.error("[Lookahead] vis-timeline not loaded");
-        return;
+(function () {
+
+    // dragstart listener is shared across all instances on the same page.
+    // Attach it only once.
+    var _dragstartAttached = false;
+
+    function _attachDragstart() {
+        if (_dragstartAttached) return;
+        _dragstartAttached = true;
+        document.addEventListener("dragstart", function (e) {
+            var el = e.target.closest ? e.target.closest(".lookahead-draggable") : null;
+            if (!el) return;
+            e.dataTransfer.setData("taskId",       el.dataset.taskId       || "");
+            e.dataTransfer.setData("taskText",     el.dataset.taskText     || "");
+            e.dataTransfer.setData("taskDuration", el.dataset.taskDuration || "1");
+            e.dataTransfer.setData("taskColor",    el.dataset.taskColor    || "#36ac81");
+            e.dataTransfer.effectAllowed = "copy";
+        });
     }
 
-    // ---- Read Bubble globals ----
-    var periodWeeks = window.BUBBLE_LOOKAHEAD_WEEKS || 4;
-    var startDate   = window.BUBBLE_LOOKAHEAD_START
-        ? new Date(window.BUBBLE_LOOKAHEAD_START)
-        : _thisMonday();
+    // ----------------------------------------------------------------
 
-    startDate.setHours(0, 0, 0, 0);
+    window.createLookaheadTimeline = function (config) {
 
-    var endDate = _addDays(startDate, periodWeeks * 7);
+        if (typeof vis === "undefined") {
+            console.error("[Lookahead] vis-timeline not loaded");
+            return null;
+        }
 
-    // ---- DataSets ----
-    var visGroups = new vis.DataSet(
-        (window.BUBBLE_LOOKAHEAD_GROUPS || []).map(function(g, i) {
-            return { id: g.id, content: g.content, order: g.order != null ? g.order : i };
-        })
-    );
+        config = config || {};
 
-    var visItems = new vis.DataSet(
-        (window.BUBBLE_LOOKAHEAD_ITEMS || []).map(function(item) {
-            return _buildItem(item.id, item.taskId, item.groupId,
-                              new Date(item.start), new Date(item.end),
-                              item.text, item.color);
-        })
-    );
+        if (!config.containerId) {
+            console.error("[Lookahead] createLookaheadTimeline: config.containerId is required");
+            return null;
+        }
 
-    // ---- Timeline ----
-    var options = {
-        groupOrder: "order",
-        stack: false,
-        start: startDate,
-        end: endDate,
-        min: _addDays(startDate, -7),
-        max: _addDays(endDate,   7),
-        zoomMin: 7   * 86400000,
-        zoomMax: 16  * 7 * 86400000,
-        orientation: { axis: "top" },
-        showCurrentTime: true,
-        margin: { item: { horizontal: 2, vertical: 4 } },
-        snap: function(date) {
-            var d = new Date(date);
-            d.setHours(0, 0, 0, 0);
-            return d;
-        },
-        editable: { updateTime: true, updateGroup: true, remove: true },
-        onMove: function(item, callback) {
-            callback(item);
-            if (typeof bubble_fn_updatePlacedTask === "function") {
-                bubble_fn_updatePlacedTask({
-                    output1: item.id,
-                    output2: String(item.group),
-                    output3: item.start,
-                    output4: item.end
+        var container = document.getElementById(config.containerId);
+        if (!container) {
+            console.error("[Lookahead] Container not found:", config.containerId);
+            return null;
+        }
+        container.classList.add("lookahead-container");
+
+        // ---- Config ----
+        var periodWeeks = config.weeks || 4;
+        var startDate   = config.start ? new Date(config.start) : _thisMonday();
+        startDate.setHours(0, 0, 0, 0);
+        var endDate = _addDays(startDate, periodWeeks * 7); // reassigned by setPeriod
+
+        // ---- DataSet ----
+        var visItems = new vis.DataSet(
+            (config.items || []).map(function (item) {
+                return _buildItem(
+                    item.id, item.taskId,
+                    new Date(item.start), new Date(item.end),
+                    item.text, item.color, item.className
+                );
+            })
+        );
+
+        // Period shading — reserved IDs so clear/refresh never removes them
+        visItems.add([
+            {
+                id: "__bg_before", content: "", type: "background",
+                className: "period-outside",
+                start: _addDays(startDate, -21), end: startDate
+            },
+            {
+                id: "__bg_after", content: "", type: "background",
+                className: "period-outside",
+                start: endDate, end: _addDays(endDate, 21)
+            }
+        ]);
+
+        // ---- Timeline options ----
+        var options = {
+            stack: true,
+            start: startDate,
+            end:   endDate,
+            min:   _addDays(startDate, -7),
+            max:   _addDays(endDate,    7),
+            zoomMin: 7       * 86400000,   // can't zoom past day level (< 7 days shows hours)
+            zoomMax: 16 * 7  * 86400000,
+            orientation:     { axis: "top" },
+            showCurrentTime: true,
+            margin: { item: { horizontal: 2, vertical: 4 } },
+            snap: function (date) {
+                var d = new Date(date);
+                d.setHours(0, 0, 0, 0);
+                return d;
+            },
+            editable: { updateTime: true, updateGroup: false, remove: true },
+            onMove: function (item, callback) {
+                // Reject move if task would start outside the lookahead period
+                if (item.start < startDate || item.start >= endDate) {
+                    callback(null);
+                    return;
+                }
+                callback(item);
+                if (typeof config.onUpdate === "function") {
+                    config.onUpdate({
+                        output1: item.id,
+                        output2: item.start,
+                        output3: item.end
+                    });
+                }
+            },
+            onRemove: function (item, callback) {
+                callback(item);
+                if (typeof config.onRemove === "function") {
+                    config.onRemove({ output1: item.id });
+                }
+            }
+        };
+
+        // ---- Create timeline ----
+        var timeline = new vis.Timeline(container, visItems, options);
+
+        // ---- Fit to period on load ----
+        timeline.setWindow(_addDays(startDate, -1), _addDays(endDate, 1), { animation: false });
+
+        // ---- Period boundary lines ----
+        var _startLineId = config.containerId + "-period-start";
+        var _endLineId   = config.containerId + "-period-end";
+        timeline.addCustomTime(startDate, _startLineId);
+        timeline.addCustomTime(endDate,   _endLineId);
+        // Lock them — snap back if accidentally dragged
+        timeline.on("timechanged", function (props) {
+            if (props.id === _startLineId) timeline.setCustomTime(startDate, _startLineId);
+            if (props.id === _endLineId)   timeline.setCustomTime(endDate,   _endLineId);
+        });
+
+        // ---- Drop target ----
+        var _locked = config.locked === true;
+
+        container.addEventListener("dragover", function (e) {
+            if (_locked) { e.dataTransfer.dropEffect = "none"; return; }
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "copy";
+            container.classList.add("drop-active");
+        });
+
+        container.addEventListener("dragleave", function (e) {
+            if (!container.contains(e.relatedTarget)) {
+                container.classList.remove("drop-active");
+            }
+        });
+
+        container.addEventListener("drop", function (e) {
+            e.preventDefault();
+            container.classList.remove("drop-active");
+            if (_locked) return;
+
+            var taskId   = e.dataTransfer.getData("taskId");
+            var taskText = e.dataTransfer.getData("taskText");
+            var duration = parseInt(e.dataTransfer.getData("taskDuration")) || 1;
+            var color    = e.dataTransfer.getData("taskColor") || "#36ac81";
+
+            if (!taskId) return;
+
+            var props = timeline.getEventProperties(e);
+            if (!props.time) return;
+
+            var start = new Date(props.snappedTime || props.time);
+            start.setHours(0, 0, 0, 0);
+
+            // Reject drop outside the period
+            if (start < startDate || start >= endDate) {
+                console.warn("[Lookahead] Drop rejected — outside period");
+                return;
+            }
+
+            var end    = _addDays(start, duration);
+            var itemId = "placed_" + taskId + "_" + Date.now();
+            visItems.add(_buildItem(itemId, taskId, start, end, taskText, color));
+
+            console.log("[Lookahead] Placed:", { itemId: itemId, taskId: taskId, start: start, end: end });
+
+            if (typeof config.onPlace === "function") {
+                config.onPlace({
+                    output1: itemId,
+                    output2: taskId,
+                    output3: start,
+                    output4: end
                 });
             }
-        },
-        onRemove: function(item, callback) {
-            callback(item);
-            if (typeof bubble_fn_removePlacedTask === "function") {
-                bubble_fn_removePlacedTask({ output1: item.id });
-            }
-        }
-    };
-
-    var container = document.getElementById("lookahead-timeline");
-    var timeline  = new vis.Timeline(container, visItems, visGroups, options);
-
-    // ---- Drop target: accept drags from Bubble's .lookahead-draggable elements ----
-    container.addEventListener("dragover", function(e) {
-        if (_locked) { e.dataTransfer.dropEffect = "none"; return; }
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "copy";
-        container.classList.add("drop-active");
-    });
-
-    container.addEventListener("dragleave", function(e) {
-        if (!container.contains(e.relatedTarget)) {
-            container.classList.remove("drop-active");
-        }
-    });
-
-    container.addEventListener("drop", function(e) {
-        e.preventDefault();
-        container.classList.remove("drop-active");
-
-        var taskId   = e.dataTransfer.getData("taskId");
-        var taskText = e.dataTransfer.getData("taskText");
-        var duration = parseInt(e.dataTransfer.getData("taskDuration")) || 1;
-        var color    = e.dataTransfer.getData("taskColor") || "#36ac81";
-
-        if (!taskId) return;
-
-        var props = timeline.getEventProperties(e);
-        if (!props.group) {
-            console.warn("[Lookahead] Dropped outside a group — ignored");
-            return;
-        }
-
-        var start = new Date(props.snappedTime || props.time);
-        start.setHours(0, 0, 0, 0);
-        var end = _addDays(start, duration);
-
-        var itemId = "placed_" + taskId + "_" + Date.now();
-        visItems.add(_buildItem(itemId, taskId, props.group, start, end, taskText, color));
-
-        console.log("[Lookahead] Placed:", { itemId, taskId, group: props.group, start, end });
-
-        if (typeof bubble_fn_placeTask === "function") {
-            bubble_fn_placeTask({
-                output1: itemId,
-                output2: taskId,
-                output3: String(props.group),
-                output4: start,
-                output5: end
-            });
-        }
-    });
-
-    // Listen for dragstart on document so Bubble's draggable items are picked up
-    document.addEventListener("dragstart", function(e) {
-        var el = e.target.closest ? e.target.closest(".lookahead-draggable") : null;
-        if (!el) return;
-        e.dataTransfer.setData("taskId",       el.dataset.taskId       || "");
-        e.dataTransfer.setData("taskText",     el.dataset.taskText     || "");
-        e.dataTransfer.setData("taskDuration", el.dataset.taskDuration || "1");
-        e.dataTransfer.setData("taskColor",    el.dataset.taskColor    || "#36ac81");
-        e.dataTransfer.effectAllowed = "copy";
-    });
-
-    // ---- Lock state ----
-    var _locked = window.BUBBLE_LOOKAHEAD_LOCKED === true;
-
-    function _applyLock(locked) {
-        _locked = locked;
-        timeline.setOptions({
-            editable: locked ? false : { updateTime: true, updateGroup: true, remove: true }
         });
-        container.classList.toggle("lookahead-locked", locked);
-        console.log("[Lookahead] " + (locked ? "Locked — editing disabled" : "Unlocked — editing enabled"));
-    }
 
-    // Apply initial lock state if Bubble set it before init
-    if (_locked) _applyLock(true);
+        // ---- Shared dragstart (attached once per page) ----
+        _attachDragstart();
 
-    // ---- Public API (called by Bubble via Run JavaScript) ----
+        // ---- Lock state ----
+        function _applyLock(locked) {
+            _locked = locked;
+            timeline.setOptions({
+                editable: locked ? false : { updateTime: true, updateGroup: false, remove: true }
+            });
+            container.classList.toggle("lookahead-locked", locked);
+            console.log("[Lookahead] " + (locked ? "Locked" : "Unlocked") + " [" + config.containerId + "]");
+        }
 
-    window.setLookaheadPeriod = function(weeks) {
-        var newEnd = _addDays(startDate, weeks * 7);
-        timeline.setWindow(startDate, newEnd, { animation: { duration: 400 } });
-    };
+        if (_locked) _applyLock(true);
 
-    window.setLookaheadLocked = function(locked) {
-        _applyLock(!!locked);
-    };
+        // ---- Helpers ----
+        function _buildItem(id, taskId, start, end, text, color, className) {
+            color = color || "#36ac81";
+            var item = {
+                id:        id,
+                content:   text || taskId,
+                start:     start,
+                end:       end,
+                title:     (text || taskId) + " — " + Math.round((end - start) / 86400000) + " días",
+                style:     "background:" + color + ";border-color:" + color + ";",
+                taskId:    taskId
+            };
+            if (className) item.className = className;
+            return item;
+        }
 
-    window.clearLookahead = function() {
-        if (_locked) { console.warn("[Lookahead] Locked — clear blocked"); return; }
-        visItems.clear();
-    };
+        function _addDays(date, days) {
+            var d = new Date(date);
+            d.setDate(d.getDate() + days);
+            return d;
+        }
 
-    window.refreshLookahead = function() {
-        visGroups.clear();
-        visGroups.add(
-            (window.BUBBLE_LOOKAHEAD_GROUPS || []).map(function(g, i) {
-                return { id: g.id, content: g.content, order: g.order != null ? g.order : i };
-            })
-        );
-        visItems.clear();
-        visItems.add(
-            (window.BUBBLE_LOOKAHEAD_ITEMS || []).map(function(item) {
-                return _buildItem(item.id, item.taskId, item.groupId,
-                                  new Date(item.start), new Date(item.end),
-                                  item.text, item.color);
-            })
-        );
-    };
+        function _thisMonday() {
+            var d = new Date();
+            var day = d.getDay();
+            d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+            return d;
+        }
 
-    console.log("[Lookahead] Timeline initialized — " + periodWeeks + " weeks from " + startDate.toDateString());
+        console.log("[Lookahead] Initialized — " + periodWeeks + " weeks from " + startDate.toDateString() + " [" + config.containerId + "]");
 
-    // ---- Helpers ----
-    function _buildItem(id, taskId, groupId, start, end, text, color) {
-        color = color || "#36ac81";
+        // ---- Public API ----
         return {
-            id:      id,
-            group:   groupId,
-            content: text || taskId,
-            start:   start,
-            end:     end,
-            title:   (text || taskId) + " — " + Math.round((end - start) / 86400000) + " días",
-            style:   "background:" + color + ";border-color:" + color + ";color:#fff;",
-            taskId:  taskId
+            setPeriod: function (weeks) {
+                endDate = _addDays(startDate, weeks * 7);
+                timeline.setWindow(startDate, endDate, { animation: { duration: 400 } });
+                visItems.update({ id: "__bg_after", start: endDate, end: _addDays(endDate, 21) });
+                timeline.setCustomTime(endDate, _endLineId);
+            },
+            setLocked: function (locked) {
+                _applyLock(!!locked);
+            },
+            clear: function () {
+                if (_locked) { console.warn("[Lookahead] Locked — clear blocked"); return; }
+                var toRemove = visItems.getIds().filter(function (id) {
+                    return id !== "__bg_before" && id !== "__bg_after";
+                });
+                visItems.remove(toRemove);
+            },
+            refresh: function (newItems) {
+                var toRemove = visItems.getIds().filter(function (id) {
+                    return id !== "__bg_before" && id !== "__bg_after";
+                });
+                visItems.remove(toRemove);
+                visItems.add(
+                    (newItems || []).map(function (item) {
+                        return _buildItem(
+                            item.id, item.taskId,
+                            new Date(item.start), new Date(item.end),
+                            item.text, item.color, item.className
+                        );
+                    })
+                );
+            },
+            scrollTo: function (date) {
+                timeline.moveTo(date, { animation: { duration: 400 } });
+            }
         };
-    }
+    };
 
-    function _addDays(date, days) {
-        var d = new Date(date);
-        d.setDate(d.getDate() + days);
-        return d;
-    }
-
-    function _thisMonday() {
-        var d = new Date();
-        var day = d.getDay();
-        d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
-        return d;
-    }
-};
-
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", window.initLookahead);
-} else {
-    window.initLookahead();
-}
+})();

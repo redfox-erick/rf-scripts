@@ -5,18 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lookahead — Demo</title>
     <link href="https://unpkg.com/vis-timeline@7.7.3/styles/vis-timeline-graph2d.min.css" rel="stylesheet">
+    <link href="lookahead.css" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            font-size: 13px; height: 100vh; display: flex; flex-direction: column;
-            overflow: hidden; background: #f8fafc;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 13px; background: #f8fafc; overflow: hidden; }
 
-        /* Toolbar */
         .toolbar {
             height: 44px; background: #fff; border-bottom: 1px solid #e2e8f0;
-            display: flex; align-items: center; padding: 0 16px; gap: 10px; flex-shrink: 0;
+            display: flex; align-items: center; padding: 0 16px; gap: 10px;
         }
         .toolbar h2 { font-size: 14px; font-weight: 600; color: #1e293b; flex: 1; }
         .toolbar label { font-size: 12px; color: #64748b; }
@@ -27,52 +23,17 @@
         .toolbar button:hover { background: #f1f5f9; }
         .toolbar button.active { background: #1d5f47; color: #fff; border-color: #1d5f47; }
 
-        /* Timeline fills the rest */
         #timeline {
-            flex: 1;
+            position: absolute;
+            top: 44px; bottom: 28px; left: 0; right: 0;
             overflow: hidden;
-            min-height: 0;
         }
 
-        /* ---- vis-timeline overrides ---- */
-        .vis-timeline {
-            border: none !important;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-            height: 100% !important;
-        }
-        .vis-time-axis .vis-text {
-            font-size: 11px !important;
-            color: #64748b !important;
-        }
-        .vis-current-time {
-            background-color: #ef4444 !important;
-            width: 2px !important;
-        }
-        .vis-item {
-            border-radius: 5px !important;
-            font-size: 12px !important;
-            font-weight: 500 !important;
-            border-width: 0 !important;
-            color: #fff !important;
-        }
-        .vis-item.vis-selected {
-            box-shadow: 0 0 0 2px #fff, 0 0 0 4px #36ac81 !important;
-        }
-        .vis-item .vis-item-content {
-            padding: 3px 10px !important;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        /* Out-of-range dimmed style */
-        .vis-item.out-of-range {
-            opacity: 0.45 !important;
-        }
-        /* Info bar at bottom */
         .info-bar {
+            position: absolute; bottom: 0; left: 0; right: 0;
             height: 28px; background: #f1f5f9; border-top: 1px solid #e2e8f0;
             display: flex; align-items: center; padding: 0 14px;
-            font-size: 11px; color: #64748b; gap: 20px; flex-shrink: 0;
+            font-size: 11px; color: #64748b;
         }
         .info-bar span b { color: #1e293b; }
     </style>
@@ -80,7 +41,7 @@
 <body>
 
 <div class="toolbar">
-    <h2>📅 Lookahead — 4 semanas</h2>
+    <h2 id="toolbar-title">📅 Lookahead</h2>
     <label>Periodo:</label>
     <select id="sel-periodo">
         <option value="2">2 semanas</option>
@@ -92,7 +53,7 @@
     <button id="btn-lock">🔒 Bloquear</button>
 </div>
 
-<div id="timeline"></div>
+<div id="timeline" class="lookahead-container"></div>
 
 <div class="info-bar">
     <span>Arrastra para mover · Jala los extremos para cambiar duración · <b>Supr</b> para eliminar</span>
@@ -100,190 +61,87 @@
 </div>
 
 <script src="https://unpkg.com/vis-timeline@7.7.3/standalone/umd/vis-timeline-graph2d.min.js"></script>
+<script src="lookahead.js"></script>
 <script>
-(function() {
-    var START = new Date("2026-03-16"); // Monday
-    START.setHours(0,0,0,0);
+window.addEventListener("load", function () {
 
-    function addDays(d, n) {
-        var r = new Date(d);
-        r.setDate(r.getDate() + n);
-        return r;
-    }
+    // START comes from Bubble (BUBBLE_LOOKAHEAD_START). In demo: today.
+    var START = new Date();
+    START.setHours(0, 0, 0, 0);
 
-    // ---- Task data ----
-    // Some tasks are inside the 4-week window, some extend outside it.
-    var items = new vis.DataSet([
-        // --- Inside range (Mar 16 – Apr 13) ---
-        {
-            id: 1,
-            content: "Colada de Losa",
-            start: new Date("2026-03-17"), end: new Date("2026-03-20"),
-            style: "background:#f59e0b; border-color:#f59e0b;"
-        },
-        {
-            id: 2,
-            content: "Estructura de Acero",
-            start: new Date("2026-03-20"), end: new Date("2026-03-27"),
-            style: "background:#3b82f6; border-color:#3b82f6;"
-        },
-        {
-            id: 3,
-            content: "HVAC Zona B",
-            start: new Date("2026-03-23"), end: new Date("2026-03-30"),
-            style: "background:#8b5cf6; border-color:#8b5cf6;"
-        },
-        {
-            id: 4,
-            content: "Conduit Eléctrico",
-            start: new Date("2026-03-30"), end: new Date("2026-04-03"),
-            style: "background:#06b6d4; border-color:#06b6d4;"
-        },
-        {
-            id: 5,
-            content: "Muros Interiores L1",
-            start: new Date("2026-04-01"), end: new Date("2026-04-08"),
-            style: "background:#f97316; border-color:#f97316;"
-        },
-        {
-            id: 6,
-            content: "Stack de Plomería",
-            start: new Date("2026-04-06"), end: new Date("2026-04-10"),
-            style: "background:#36ac81; border-color:#36ac81;"
-        },
+    var WEEKS = 4;
 
-        // --- Starts BEFORE range (se ve recortada al inicio) ---
-        {
-            id: 7,
-            className: "out-of-range",
-            content: "Cimentación Bloque B ◀",
-            start: new Date("2026-03-02"), end: new Date("2026-03-18"),
-            style: "background:#94a3b8; border-color:#94a3b8;"
-        },
+    function addDays(d, n) { var r = new Date(d); r.setDate(r.getDate() + n); return r; }
+    function fmt(d)         { return new Date(d).toLocaleDateString("es-MX", { day: "2-digit", month: "short" }); }
 
-        // --- Starts inside but ends AFTER range ---
-        {
-            id: 8,
-            content: "Instalación Ventanas ▶",
-            start: new Date("2026-04-08"), end: new Date("2026-04-22"),
-            style: "background:#ec4899; border-color:#ec4899;"
-        },
+    // ---- Demo task data (relative to today) ----
+    var demoItems = [
+        { id: 1, taskId: "t1", text: "Colada de Losa",       start: addDays(START, 0),  end: addDays(START, 3),  color: "#f59e0b" },
+        { id: 2, taskId: "t2", text: "Estructura de Acero",  start: addDays(START, 1),  end: addDays(START, 8),  color: "#3b82f6" },
+        { id: 3, taskId: "t3", text: "HVAC Zona B",          start: addDays(START, 5),  end: addDays(START, 12), color: "#8b5cf6" },
+        { id: 4, taskId: "t4", text: "Conduit Eléctrico",    start: addDays(START, 11), end: addDays(START, 15), color: "#06b6d4" },
+        { id: 5, taskId: "t5", text: "Muros Interiores L1",  start: addDays(START, 14), end: addDays(START, 21), color: "#f97316" },
+        { id: 6, taskId: "t6", text: "Stack de Plomería",    start: addDays(START, 19), end: addDays(START, 23), color: "#36ac81" },
+        // Starts before the period
+        { id: 7, taskId: "t7", text: "Cimentación Bloque B ◀", start: addDays(START, -18), end: addDays(START, 2), color: "#94a3b8", className: "out-of-range" },
+        // Starts inside, ends after the period
+        { id: 8, taskId: "t8", text: "Instalación Ventanas ▶", start: addDays(START, 22), end: addDays(START, 36), color: "#ec4899" },
+        // Completely after the period
+        { id: 9, taskId: "t9", text: "Pintura Exterior ▶▶",    start: addDays(START, 32), end: addDays(START, 40), color: "#94a3b8", className: "out-of-range" }
+    ];
 
-        // --- Completely AFTER range ---
-        {
-            id: 9,
-            className: "out-of-range",
-            content: "Pintura Exterior ▶▶",
-            start: new Date("2026-04-20"), end: new Date("2026-04-28"),
-            style: "background:#94a3b8; border-color:#94a3b8;"
-        }
-    ]);
-
-    // ---- Timeline options ----
-    var windowEnd = addDays(START, 4 * 7);
-
-    var options = {
-        stack: true,
-        start: START,
-        end: windowEnd,
-        min: addDays(START, -21),   // can scroll 3 weeks back
-        max: addDays(windowEnd, 21), // can scroll 3 weeks forward
-        zoomMin: 7   * 86400000,
-        zoomMax: 16  * 7 * 86400000,
-        orientation: { axis: "top" },
-        showCurrentTime: true,
-        margin: { item: { horizontal: 2, vertical: 6 } },
-        snap: function(date) {
-            var d = new Date(date);
-            d.setHours(0, 0, 0, 0);
-            return d;
+    // ---- Create timeline via factory ----
+    var tl = window.createLookaheadTimeline({
+        containerId: "timeline",
+        weeks:  WEEKS,
+        start:  START,
+        items:  demoItems,
+        locked: false,
+        onPlace:  function (d) { console.log("[Demo] place",  d); },
+        onUpdate: function (d) {
+            console.log("[Demo] update", d);
+            // Show updated info in the bar
+            var start = new Date(d.output2), end = new Date(d.output3);
+            var days = Math.round((end - start) / 86400000);
+            document.getElementById("info-sel").textContent =
+                fmt(start) + " → " + fmt(end) + " (" + days + " días)";
         },
-        editable: { updateTime: true, updateGroup: false, remove: true },
-        onMove: function(item, cb) {
-            cb(item);
-            showInfo(item);
-        },
-        onRemove: function(item, cb) {
-            cb(item);
+        onRemove: function (d) {
+            console.log("[Demo] remove", d);
             document.getElementById("info-sel").textContent = "";
-        },
-        format: {
-            minorLabels: { day: "D", week: "D MMM" }
         }
-    };
-
-    var container = document.getElementById("timeline");
-
-    // Set explicit pixel height so vis-timeline can calculate layout correctly.
-    // flex:1 alone isn't picked up reliably at init time.
-    function setHeight() {
-        var h = window.innerHeight - 44 - 28; // minus toolbar + info bar
-        container.style.height = h + "px";
-    }
-    setHeight();
-
-    var timeline = new vis.Timeline(container, items, options);
-
-    // Keep height in sync on resize and force a redraw
-    window.addEventListener("resize", function() {
-        setHeight();
-        timeline.redraw();
     });
 
-    // Show selection info
-    timeline.on("select", function(props) {
-        if (!props.items.length) {
-            document.getElementById("info-sel").textContent = "";
-            return;
-        }
-        var item = items.get(props.items[0]);
-        var days = Math.round((new Date(item.end) - new Date(item.start)) / 86400000);
-        var fmt = function(d) {
-            return new Date(d).toLocaleDateString("es-MX", { day: "2-digit", month: "short" });
-        };
-        document.getElementById("info-sel").textContent =
-            item.content.replace(/ [◀▶]+$/, "") +
-            " · " + fmt(item.start) + " → " + fmt(item.end) +
-            " (" + days + " días)";
-    });
+    if (!tl) return; // vis not loaded
 
-    function showInfo(item) {
-        var days = Math.round((new Date(item.end) - new Date(item.start)) / 86400000);
-        var fmt = function(d) {
-            return new Date(d).toLocaleDateString("es-MX", { day: "2-digit", month: "short" });
-        };
-        document.getElementById("info-sel").textContent =
-            item.content.replace(/ [◀▶]+$/, "") +
-            " · " + fmt(item.start) + " → " + fmt(item.end) +
-            " (" + days + " días)";
-    }
+    // ---- Update toolbar title ----
+    var endDate = addDays(START, WEEKS * 7);
+    document.getElementById("toolbar-title").textContent =
+        "📅 Lookahead — " + WEEKS + " semanas (" + fmt(START) + " – " + fmt(endDate) + ")";
 
-    // ---- Period selector ----
-    document.getElementById("sel-periodo").addEventListener("change", function() {
+    // ---- Controls ----
+    document.getElementById("sel-periodo").addEventListener("change", function () {
         var weeks = +this.value;
+        tl.setPeriod(weeks);
         var newEnd = addDays(START, weeks * 7);
-        timeline.setWindow(START, newEnd, { animation: { duration: 400 } });
-        document.querySelector(".toolbar h2").textContent =
-            "📅 Lookahead — " + weeks + " semana" + (weeks > 1 ? "s" : "");
+        document.getElementById("toolbar-title").textContent =
+            "📅 Lookahead — " + weeks + " semana" + (weeks > 1 ? "s" : "") +
+            " (" + fmt(START) + " – " + fmt(newEnd) + ")";
     });
 
-    // ---- Hoy button ----
-    document.getElementById("btn-today").addEventListener("click", function() {
-        timeline.moveTo(new Date(), { animation: { duration: 400 } });
+    document.getElementById("btn-today").addEventListener("click", function () {
+        tl.scrollTo(new Date());
     });
 
-    // ---- Lock toggle ----
     var locked = false;
-    document.getElementById("btn-lock").addEventListener("click", function() {
+    document.getElementById("btn-lock").addEventListener("click", function () {
         locked = !locked;
-        timeline.setOptions({
-            editable: locked ? false : { updateTime: true, updateGroup: false, remove: true }
-        });
+        tl.setLocked(locked);
         this.textContent = locked ? "🔓 Desbloquear" : "🔒 Bloquear";
         this.classList.toggle("active", locked);
     });
 
-})();
+});
 </script>
 </body>
 </html>

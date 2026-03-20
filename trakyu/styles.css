@@ -66,6 +66,15 @@
   border-color: #1d5f47 transparent transparent transparent;
 }
 
+/* milestones — black diamond */
+.gantt_task_line.gantt_milestone {
+  background: #1e293b !important;
+  border-color: #1e293b !important;
+}
+.gantt_task_line.gantt_milestone.gantt_selected {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #36ac81 !important;
+}
+
 /* progreso dentro de la barra */
 .gantt_task_progress{
   background: #36ac81;

@@ -143,10 +143,9 @@ gantt.config.layout = {
 };
 
 gantt.templates.task_class = function(start, end, task) {
+  if (task.type === gantt.config.types.milestone) return ""; // let DHTMLX render diamond natively
   if (isCompleted(task)) return "task_completed";
-  if (gantt.hasChild(task.id) ||
-      task.type === gantt.config.types.project ||
-      task.type === gantt.config.types.milestone) return "task-parent";
+  if (gantt.hasChild(task.id) || task.type === gantt.config.types.project) return "task-parent";
   return "";
 };
 
@@ -444,6 +443,11 @@ function initGantt() {
     try {
         gantt.parse(dataToLoad);
         console.log("[Gantt] gantt.parse() OK — tasks loaded:", gantt.getTaskCount());
+        gantt.sort(function(a, b) {
+            var startDiff = a.start_date - b.start_date;
+            if (startDiff !== 0) return startDiff;
+            return a.end_date - b.end_date;
+        });
     } catch(e) {
         console.error("[Gantt] gantt.parse() FAILED:", e);
     }
