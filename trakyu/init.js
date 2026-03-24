@@ -435,6 +435,11 @@ function initGantt() {
             colDropdown.style.display = colDropdown.style.display === "none" ? "block" : "none";
         });
 
+        // Stop clicks inside the dropdown from bubbling to document (which closes it)
+        colDropdown.addEventListener("click", function(e) {
+            e.stopPropagation();
+        });
+
         document.addEventListener("click", function() {
             colDropdown.style.display = "none";
         });
