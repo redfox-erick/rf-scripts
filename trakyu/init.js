@@ -63,6 +63,7 @@ var COL_VISIBILITY_KEY = "trakyu_col_visibility";
 var TOGGLEABLE_COLS = [
   { name: "start_date", label: "Inicio" },
   { name: "end_date",   label: "Fin" },
+  { name: "duration",   label: "Duración" },
   { name: "avance",     label: "Avance" },
   { name: "add",        label: "Agregar" }
 ];
@@ -158,6 +159,12 @@ gantt.config.columns = [
   },
   {name: "start_date", label: "Inicio", width: 125, align: "center", resize: true},
   {name: "end_date", label: "Fin", width: 125, align: "center", resize: true},
+  {name: "duration", label: "Días", width: 60, align: "center", resize: true,
+    template: function(task) {
+      var days = Math.round((task.end_date - task.start_date) / 86400000);
+      return days;
+    }
+  },
   {
     name: "avance", label: "Avance", align: "center", width: 130, resize: true,
     template: function(task){
