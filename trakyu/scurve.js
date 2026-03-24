@@ -50,8 +50,12 @@ window.initSCurve = function() {
 
                 var ts = currDate.valueOf();
                 if (!timegrid[ts]) timegrid[ts] = { planned: 0, real: 0 };
-                timegrid[ts].planned += 1;
-                if (date <= today) timegrid[ts].real += 1 * (task.progress || 0);
+                // Weight by actual days the task occupies in this period (MS Project method)
+                var overlapStart = date        > task.start_date ? date        : task.start_date;
+                var overlapEnd   = currDate    < task.end_date   ? currDate    : task.end_date;
+                var daysInPeriod = Math.max(0, (overlapEnd - overlapStart) / 86400000);
+                timegrid[ts].planned += daysInPeriod;
+                if (date <= today) timegrid[ts].real += daysInPeriod * (task.progress || 0);
             }
         });
 
@@ -108,10 +112,14 @@ window.initSCurve = function() {
 
             var currDate = gantt.date[step + "_start"](new Date(startDate));
             while (currDate < endDate) {
+                var periodStart = currDate;
                 currDate = gantt.date.add(currDate, 1, step);
                 var ts = currDate.valueOf();
                 if (!timegrid[ts]) timegrid[ts] = 0;
-                timegrid[ts] += 1;
+                // Weight by actual days in period (MS Project method)
+                var overlapStart = periodStart > startDate ? periodStart : startDate;
+                var overlapEnd   = currDate    < endDate   ? currDate    : endDate;
+                timegrid[ts] += Math.max(0, (overlapEnd - overlapStart) / 86400000);
             }
         });
 
