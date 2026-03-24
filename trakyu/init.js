@@ -168,8 +168,18 @@ gantt.config.columns = [
   {
     name: "avance", label: "Avance", align: "center", width: 130, resize: true,
     template: function(task){
-      const porcentaje = calcularAvance(task);
-      return porcentaje + "%";
+      if (gantt.hasChild(task.id)) {
+        // Duration-weighted average of all leaf descendants (MS Project method)
+        var totalDays = 0, weightedSum = 0;
+        gantt.eachTask(function(child) {
+          if (gantt.hasChild(child.id)) return; // skip summary tasks, count only leaves
+          var days = Math.round((child.end_date - child.start_date) / 86400000);
+          totalDays += days;
+          weightedSum += days * (child.progress || 0);
+        }, task.id);
+        return (totalDays > 0 ? Math.round(weightedSum / totalDays * 100) : 0) + "%";
+      }
+      return calcularAvance(task) + "%";
     }
   },
 {name: "add", label:"", width: 40}
