@@ -29,19 +29,21 @@ gantt.attachEvent("onBeforeParse", function(data) {
 
 // --- Data refresh (#6) ---
 // Bubble calls this via "Run JavaScript" AFTER a workflow completes (create/update/delete task or link).
-// This avoids the race condition where refreshing the HTML element re-parses stale data.
-window.refreshGanttData = function() {
+// Pass tasks and links directly from Bubble's expression to avoid reading stale window globals.
+// Usage: refreshGanttData(BUBBLE_GANTT_DATA, BUBBLE_GANTT_LINKS)
+window.refreshGanttData = function(tasks, links) {
+    var scroll = gantt.getScrollState();
     var fresh = {
-        data:  window.BUBBLE_GANTT_DATA  || [],
-        links: window.BUBBLE_GANTT_LINKS || []
+        data:  tasks || window.BUBBLE_GANTT_DATA  || [],
+        links: links || window.BUBBLE_GANTT_LINKS || []
     };
 
     gantt.clearAll();
     gantt.parse(fresh);
 
-    // Restore open task state and scroll position after re-parse
     if (typeof restoreOpenTasks === "function") restoreOpenTasks();
-    if (typeof restorePersistedScroll === "function") restorePersistedScroll();
+    // Restore scroll after restoreOpenTasks (which calls gantt.render internally)
+    gantt.scrollTo(scroll.x, scroll.y);
 };
 
 // Función para manejar la búsqueda dinámica

@@ -122,7 +122,59 @@ gantt.attachEvent("onAfterLinkDelete", function(id) {
     }
 });
 
-// Refactored tooltip logic for better readability
+// --- Dependency conflict feedback ---
+
+function showGanttToast(msg) {
+    var existing = document.getElementById("gantt-toast");
+    if (existing) existing.remove();
+    var toast = document.createElement("div");
+    toast.id = "gantt-toast";
+    toast.textContent = msg;
+    document.getElementById("gantt_here").appendChild(toast);
+    setTimeout(function() { if (toast.parentNode) toast.remove(); }, 4000);
+}
+
+var _draggedId = null;
+var _dragIntendedStart = null;
+
+// Track the user's intended position on each drag frame
+gantt.attachEvent("onTaskDrag", function(id, mode, task) {
+    _draggedId = id;
+    _dragIntendedStart = new Date(task.start_date);
+    return true;
+});
+
+// Fallback: clear state if auto-scheduling never fires (task has no links)
+gantt.attachEvent("onAfterTaskDrag", function() {
+    setTimeout(function() {
+        _draggedId = null;
+        _dragIntendedStart = null;
+    }, 200);
+});
+
+// onAfterAutoSchedule fires AFTER auto-scheduling adjusts tasks — the correct place to compare
+// updatedTasks is an array of IDs of tasks that were actually moved by auto-scheduling
+gantt.attachEvent("onAfterAutoSchedule", function(taskId, updatedTasks) {
+    if (!_draggedId || !_dragIntendedStart) return;
+    var id = _draggedId;
+    var intended = _dragIntendedStart;
+    _draggedId = null;
+    _dragIntendedStart = null;
+
+    if (!gantt.isTaskExists(id)) return;
+    var task = gantt.getTask(id);
+    // If the dragged task was adjusted by more than 1 day, notify the user
+    if (Math.abs(task.start_date - intended) > 86400000) {
+        showGanttToast("Esta tarea tiene dependencias — fue ajustada al primer día disponible.");
+    }
+});
+
+// Circular dependency loop — separate case
+gantt.attachEvent("onAutoScheduleCircularLink", function() {
+    showGanttToast("No se puede mover: dependencia circular detectada.");
+});
+
+// --- Refactored tooltip logic for better readability
 const tooltipManager = (() => {
     // Fix #6: lazy-initialize so we don't query the DOM before Bubble renders the element
     let _tooltip = null;

@@ -14,22 +14,19 @@ window.initSCurve = function() {
 
     // ---- Data helpers ----
 
+    // Builds an ordered array of period-end Date objects spanning all tasks.
+    // Avoids the undocumented trace_x internal; derives dates from getSubtaskDates() + scale unit.
     function getChartScaleRange() {
         var tasksRange = gantt.getSubtaskDates();
-        var scale = gantt.getScale();
-        if (!tasksRange.start_date) return scale.trace_x;
+        if (!tasksRange.start_date || !tasksRange.end_date) return [];
 
+        var step = gantt.getScale().unit;
         var cells = [];
-        scale.trace_x.forEach(function(date, index) {
-            var within = +tasksRange.start_date <= +date && +date <= +tasksRange.end_date;
-            var left = index !== scale.trace_x.length - 1 &&
-                       +date < +tasksRange.start_date &&
-                       +tasksRange.start_date < +scale.trace_x[index + 1];
-            var right = index > 0 &&
-                        +scale.trace_x[index - 1] < +tasksRange.end_date &&
-                        +tasksRange.end_date < +date;
-            if (within || left || right) cells.push(date);
-        });
+        var curr = gantt.date[step + "_start"](new Date(tasksRange.start_date));
+        while (curr <= tasksRange.end_date) {
+            curr = gantt.date.add(curr, 1, step);
+            cells.push(new Date(curr));
+        }
         return cells;
     }
 
@@ -40,7 +37,7 @@ window.initSCurve = function() {
         var timegrid = {};
 
         gantt.eachTask(function(task) {
-            if (gantt.isSummaryTask(task) || !task.duration) return;
+            if (gantt.hasChild(task.id) || !task.duration) return;
 
             var currDate = gantt.date[step + "_start"](new Date(task.start_date));
             while (currDate < task.end_date) {
