@@ -476,9 +476,21 @@ function initGantt() {
     if (typeof initBaselines === "function") initBaselines();
 }
 
+// Start only when both DOM and ganttData are ready — whichever arrives last.
+// Case 1: init.js loads after data.js  → window.ganttData already set, start immediately.
+// Case 2: init.js loads before data.js → wait for the ganttDataReady event.
 console.log("[Gantt] readyState at script execution:", document.readyState);
+
+function _tryStartGantt() {
+    if (window.ganttData) {
+        initGantt();
+    } else {
+        document.addEventListener("ganttDataReady", initGantt, { once: true });
+    }
+}
+
 if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initGantt);
+    document.addEventListener("DOMContentLoaded", _tryStartGantt);
 } else {
-    initGantt();
+    _tryStartGantt();
 }

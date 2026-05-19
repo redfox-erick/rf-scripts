@@ -3,9 +3,12 @@
 // Esperar que Bubble proporcione los datos dinámicamente
 // Fix #4: exposed as window.ganttData so init.js can call gantt.parse() after gantt.init()
 window.ganttData = {
-  data: window.BUBBLE_GANTT_DATA || [], // Bubble debe definir esta variable global
-  links: window.BUBBLE_GANTT_LINKS || [] // Bubble debe definir esta variable global
+  data: window.BUBBLE_GANTT_DATA || [],
+  links: window.BUBBLE_GANTT_LINKS || []
 };
+
+// Signal init.js that data is ready (handles the case where data.js loads after init.js)
+document.dispatchEvent(new CustomEvent("ganttDataReady"));
 
 // Validate Gantt data before parsing
 const validateDates = (tasks) => {
