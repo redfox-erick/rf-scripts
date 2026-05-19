@@ -1,13 +1,13 @@
 // Archivo para manejar los datos dinámicos del Gantt
+console.log("[Gantt] data.js loaded — BUBBLE_GANTT_DATA length:", (window.BUBBLE_GANTT_DATA || []).length);
 
-// Esperar que Bubble proporcione los datos dinámicamente
-// Fix #4: exposed as window.ganttData so init.js can call gantt.parse() after gantt.init()
 window.ganttData = {
   data: window.BUBBLE_GANTT_DATA || [],
   links: window.BUBBLE_GANTT_LINKS || []
 };
 
 // Signal init.js that data is ready (handles the case where data.js loads after init.js)
+console.log("[Gantt] dispatching ganttDataReady");
 document.dispatchEvent(new CustomEvent("ganttDataReady"));
 
 // Validate Gantt data before parsing

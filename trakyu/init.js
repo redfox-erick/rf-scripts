@@ -483,9 +483,23 @@ console.log("[Gantt] readyState at script execution:", document.readyState);
 
 function _tryStartGantt() {
     if (window.ganttData) {
+        console.log("[Gantt] ganttData already set — starting immediately");
         initGantt();
     } else {
+        console.log("[Gantt] waiting for ganttDataReady event...");
         document.addEventListener("ganttDataReady", initGantt, { once: true });
+        // Fallback: if data never arrives, start with whatever is on window after 3s
+        setTimeout(function() {
+            if (!gantt.getTaskCount || gantt.getTaskCount() === 0) {
+                console.warn("[Gantt] ganttDataReady never fired — starting with fallback data");
+                window.ganttData = {
+                    data: window.BUBBLE_GANTT_DATA || [],
+                    links: window.BUBBLE_GANTT_LINKS || []
+                };
+                document.removeEventListener("ganttDataReady", initGantt);
+                initGantt();
+            }
+        }, 3000);
     }
 }
 
