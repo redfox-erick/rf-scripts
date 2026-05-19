@@ -16,11 +16,55 @@ function confirmCompletion(id) {
   gantt.render();
 }
 
+// --- Bubble call debounce queue ---
+// Collects pending Bubble calls and flushes them after 600ms of inactivity.
+// Last write wins per key, so rapid updates to the same task collapse into one call.
+var _bubbleQueue = {};
+var _bubbleTimer = null;
+var BUBBLE_DEBOUNCE_MS = 600;
+var BUBBLE_LOCK_MS = 1200;
+
+function _showSavingOverlay() {
+    if (document.getElementById("gantt-saving-overlay")) return;
+    var overlay = document.createElement("div");
+    overlay.id = "gantt-saving-overlay";
+    overlay.innerHTML = "<span>Guardando…</span>";
+    document.getElementById("gantt_here").appendChild(overlay);
+}
+
+function _hideSavingOverlay() {
+    var el = document.getElementById("gantt-saving-overlay");
+    if (el) el.remove();
+}
+
+function _flushBubbleQueue() {
+    _showSavingOverlay();
+    var queue = _bubbleQueue;
+    _bubbleQueue = {};
+    Object.keys(queue).forEach(function(key) {
+        var entry = queue[key];
+        if (typeof entry.fn === "function") entry.fn(entry.payload);
+    });
+    setTimeout(_hideSavingOverlay, BUBBLE_LOCK_MS);
+}
+
+function _queueBubble(key, fn, payload) {
+    // A delete cancels any pending create/update for the same task
+    if (key.indexOf("task_delete_") === 0) {
+        var taskId = key.replace("task_delete_", "");
+        delete _bubbleQueue["task_create_" + taskId];
+        delete _bubbleQueue["task_update_" + taskId];
+    }
+    _bubbleQueue[key] = { fn: fn, payload: payload };
+    clearTimeout(_bubbleTimer);
+    _bubbleTimer = setTimeout(_flushBubbleQueue, BUBBLE_DEBOUNCE_MS);
+}
+
 // Create Tasks
 gantt.attachEvent("onAfterTaskAdd", function(id, item) {
-    if (item.is_ghost) return; // baseline ghost — don't sync to Bubble
+    if (item.is_ghost) return;
     if (typeof bubble_fn_createTask === "function") {
-        bubble_fn_createTask({
+        _queueBubble("task_create_" + id, bubble_fn_createTask, {
             output1: id,
             output2: item.text,
             output3: item.start_date,
@@ -32,9 +76,9 @@ gantt.attachEvent("onAfterTaskAdd", function(id, item) {
 
 // Update Tasks
 gantt.attachEvent("onAfterTaskUpdate", function(id, item) {
-    if (item.is_ghost) return; // baseline ghost — don't sync to Bubble
+    if (item.is_ghost) return;
     if (typeof bubble_fn_updateTask === "function") {
-        bubble_fn_updateTask({
+        _queueBubble("task_update_" + id, bubble_fn_updateTask, {
             output1: id,
             output2: item.text,
             output3: item.start_date,
@@ -46,9 +90,9 @@ gantt.attachEvent("onAfterTaskUpdate", function(id, item) {
 
 // Delete Tasks
 gantt.attachEvent("onAfterTaskDelete", function(id, item) {
-    if (item && item.is_ghost) return; // baseline ghost — don't sync to Bubble
+    if (item && item.is_ghost) return;
     if (typeof bubble_fn_deleteTask === "function") {
-        bubble_fn_deleteTask(id);
+        _queueBubble("task_delete_" + id, bubble_fn_deleteTask, id);
     }
 });
 
@@ -101,13 +145,13 @@ gantt.attachEvent("onBeforeLinkAdd", function() {
 gantt.attachEvent("onAfterLinkAdd", function(id, link) {
     restoreScrollPosition(_linkScroll);
     if (typeof bubble_fn_createLink === "function") {
-        bubble_fn_createLink({ output1: id, output2: link.source, output3: link.target, output4: link.type });
+        _queueBubble("link_create_" + id, bubble_fn_createLink, { output1: id, output2: link.source, output3: link.target, output4: link.type });
     }
 });
 
 gantt.attachEvent("onAfterLinkUpdate", function(id, link) {
     if (typeof bubble_fn_updateLink === "function") {
-        bubble_fn_updateLink({ output1: id, output2: link.source, output3: link.target, output4: link.type });
+        _queueBubble("link_update_" + id, bubble_fn_updateLink, { output1: id, output2: link.source, output3: link.target, output4: link.type });
     }
 });
 
@@ -118,7 +162,7 @@ gantt.attachEvent("onBeforeLinkDelete", function() {
 gantt.attachEvent("onAfterLinkDelete", function(id) {
     restoreScrollPosition(_linkScroll);
     if (typeof bubble_fn_deleteLink === "function") {
-        bubble_fn_deleteLink({ output1: id });
+        _queueBubble("link_delete_" + id, bubble_fn_deleteLink, { output1: id });
     }
 });
 

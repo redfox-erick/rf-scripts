@@ -306,6 +306,28 @@
     border-color: #333333 transparent transparent transparent;
 }
 
+/* Saving overlay — blocks interaction while flushing to Bubble */
+#gantt-saving-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 300;
+    background: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: all;
+    cursor: wait;
+}
+#gantt-saving-overlay span {
+    background: #1d5f47;
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
 /* Dependency conflict toast */
 #gantt-toast {
     position: absolute;
