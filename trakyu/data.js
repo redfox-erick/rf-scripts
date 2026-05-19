@@ -11,7 +11,7 @@ console.log("[Gantt] dispatching ganttDataReady");
 document.dispatchEvent(new CustomEvent("ganttDataReady"));
 
 // Validate Gantt data before parsing
-const validateDates = (tasks) => {
+var validateDates = function(tasks) {
   tasks.forEach(task => {
     if (!task.start_date || isNaN(new Date(task.start_date).getTime())) {
       console.error(`Invalid start_date for task ID ${task.id}:`, task.start_date);

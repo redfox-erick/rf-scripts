@@ -219,7 +219,7 @@ gantt.attachEvent("onAutoScheduleCircularLink", function() {
 });
 
 // --- Refactored tooltip logic for better readability
-const tooltipManager = (() => {
+var tooltipManager = (function() {
     // Fix #6: lazy-initialize so we don't query the DOM before Bubble renders the element
     let _tooltip = null;
     let hideTimeout;
