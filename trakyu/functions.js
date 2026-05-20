@@ -68,7 +68,7 @@ gantt.attachEvent("onAfterTaskAdd", function(id, item) {
             output1: id,
             output2: item.text,
             output3: item.start_date,
-            output4: item.duration,
+            output4: item.end_date,
             outputlist1: [item.parent]
         });
     }
@@ -82,7 +82,7 @@ gantt.attachEvent("onAfterTaskUpdate", function(id, item) {
             output1: id,
             output2: item.text,
             output3: item.start_date,
-            output4: item.duration,
+            output4: item.end_date,
             outputlist1: [item.parent]
         });
     }
