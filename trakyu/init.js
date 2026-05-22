@@ -522,10 +522,13 @@ function _tryStartGantt() {
                 // Keep listening in case data.js loads after the fallback fired
                 document.addEventListener("ganttDataReady", function() {
                     console.log("[Gantt] ganttDataReady received after fallback — refreshing with real data");
+                    console.log("[Gantt] window.ganttData at refresh:", window.ganttData);
+                    console.log("[Gantt] tasks sample (first 3):", (window.ganttData.data || []).slice(0, 3));
                     _showLoadingOverlay();
                     if (typeof window.refreshGanttData === "function") {
                         window.refreshGanttData(window.ganttData.data, window.ganttData.links);
                     }
+                    console.log("[Gantt] tasks loaded after refresh:", gantt.getTaskCount());
                     _hideLoadingOverlay();
                 }, { once: true });
             }
