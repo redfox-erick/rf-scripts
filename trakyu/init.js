@@ -265,6 +265,7 @@ gantt.config.undo = true;
 gantt.config.drag_progress = false; // remove progress drag arrow
 gantt.config.drag_links = true;     // enable dependency drawing
 gantt.config.initial_scroll = false; // prevent auto-scroll to first task after parse()
+gantt.config.order_branch = true;   // enable drag-to-reorder within same parent level
 
 // In Bubble, DOMContentLoaded has already fired by the time HTML elements execute.
 // Check readyState and run immediately if the DOM is already ready.
@@ -461,11 +462,6 @@ function initGantt() {
     try {
         gantt.parse(dataToLoad);
         console.log("[Gantt] gantt.parse() OK — tasks loaded:", gantt.getTaskCount());
-        gantt.sort(function(a, b) {
-            var startDiff = a.start_date - b.start_date;
-            if (startDiff !== 0) return startDiff;
-            return a.end_date - b.end_date;
-        });
     } catch(e) {
         console.error("[Gantt] gantt.parse() FAILED:", e);
     }
