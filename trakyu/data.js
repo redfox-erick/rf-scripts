@@ -33,10 +33,6 @@ gantt.attachEvent("onBeforeParse", function(data) {
 // Bubble calls this via "Run JavaScript" AFTER a workflow completes (create/update/delete task or link).
 // Pass tasks and links directly from Bubble's expression to avoid reading stale window globals.
 // Usage: refreshGanttData(BUBBLE_GANTT_DATA, BUBBLE_GANTT_LINKS)
-// Dispatch after refreshGanttData is defined so the fallback listener in init.js can call it immediately
-console.log("[Gantt] dispatching ganttDataReady");
-document.dispatchEvent(new CustomEvent("ganttDataReady"));
-
 window.refreshGanttData = function(tasks, links) {
     var scroll = gantt.getScrollState();
     var fresh = {
@@ -90,3 +86,7 @@ function applySearch(busqueda) {
 
   gantt.render();
 }
+
+// Dispatch at the very end so refreshGanttData is guaranteed to be defined when the listener runs
+console.log("[Gantt] dispatching ganttDataReady");
+document.dispatchEvent(new CustomEvent("ganttDataReady"));
