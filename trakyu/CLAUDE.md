@@ -66,9 +66,11 @@ When `bubble_fn_updateTask` triggers a workflow that saves a Thing, Bubble detec
 
 ### 2. Load order between Bubble HTML elements is not guaranteed
 When code is split across multiple HTML elements (e.g. `data.js` and `init.js`), both execute simultaneously with no guaranteed order. The correct pattern is a **custom event handshake**:
-- The data element sets `window.ganttData` then dispatches `ganttDataReady`
+- The data element sets `window.ganttData` then dispatches `ganttDataReady` — **at the very end of the file**, after all functions are defined
 - The init element checks if `window.ganttData` already exists (data arrived first) or listens for the event (init arrived first)
-- A 3-second timeout fallback attempts initialization with `window.BUBBLE_GANTT_DATA` directly if the event never fires
+- A 3-second timeout fallback initializes with empty data and registers a second `ganttDataReady` listener that calls `refreshGanttData` if data arrives late
+
+**Critical:** `document.dispatchEvent` for custom events is **synchronous** — the listener runs inline before the next line of the dispatching script. If `ganttDataReady` is dispatched before `refreshGanttData` is defined, the listener will find `typeof refreshGanttData === "undefined"` and silently skip the refresh. The dispatch must be the last line of `data.js`.
 
 ### 3. `onAfterTaskUpdate` fires twice when auto-scheduling is active
 When a user drags a task that has dependencies, DHTMLX fires `onAfterTaskUpdate` twice:
@@ -106,7 +108,15 @@ Repeated drags, resizes, or quick edits fire multiple `bubble_fn_updateTask` cal
 
 10. **Bubble call debounce queue** — `_queueBubble(key, fn, payload)` wraps all `bubble_fn_*` calls. 600ms debounce window, last-write-wins per task ID. Delete cancels any pending create/update for the same ID. Flush shows "Guardando…" overlay for 1.2s. Covers: `createTask`, `updateTask`, `deleteTask`, `createLink`, `updateLink`, `deleteLink`.
 
-11. **data.js / init.js load coordination** — `data.js` dispatches `ganttDataReady` after setting `window.ganttData`. `init.js` checks for existing data or waits for the event. 3-second fallback if event never fires.
+11. **data.js / init.js load coordination** — `data.js` dispatches `ganttDataReady` as its very last line (after all functions are defined). `init.js` checks for existing data or waits for the event. 3-second fallback initializes with empty data and keeps a second listener active to catch late-arriving data via `refreshGanttData`.
+
+12. **Task callbacks send `end_date`, not `duration`** — `bubble_fn_createTask` and `bubble_fn_updateTask` send `output4: item.end_date`. Bubble saves start and end directly; never derives end from duration to avoid off-by-one day errors.
+
+13. **Drag-to-reorder with fractional indexing** — `order_branch = true` enables row drag within the same parent level. `onAfterRowReorder` computes a midpoint index between the moved task's neighbors and calls `bubble_fn_reorderTask(output1: bubble_id, output2: new_index)`. Only one Bubble record is updated per reorder. Tasks must include a `bubble_id` field in `BUBBLE_GANTT_DATA`.
+
+14. **Loading overlay** — shown in `#gantt_here` as soon as `_tryStartGantt` runs; hidden at the end of `initGantt()`. Re-shown briefly during the late-data refresh path.
+
+15. **Drag handle column** — first column in the grid (28px, no label) renders a ⠿ icon. Styled in `styles.css` with `grab`/`grabbing` cursor on hover. Full row remains draggable (DHTMLX behavior); the handle is a visual affordance only.
 
 ---
 
