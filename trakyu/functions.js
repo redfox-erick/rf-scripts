@@ -90,10 +90,38 @@ gantt.attachEvent("onAfterTaskUpdate", function(id, item) {
 
 // Reorder Tasks
 gantt.attachEvent("onAfterRowReorder", function(id) {
-    if (typeof bubble_fn_reorderTasks !== "function") return;
-    var ids = [];
-    gantt.eachTask(function(task) { ids.push(task.bubble_id); });
-    _queueBubble("task_reorder", bubble_fn_reorderTasks, { outputlist1: ids });
+    if (typeof bubble_fn_reorderTask !== "function") return;
+
+    var ordered = [];
+    gantt.eachTask(function(t) { ordered.push(t); });
+
+    var pos = -1;
+    for (var i = 0; i < ordered.length; i++) {
+        if (String(ordered[i].id) === String(id)) { pos = i; break; }
+    }
+    if (pos === -1) return;
+
+    var prev = pos > 0 ? ordered[pos - 1] : null;
+    var next = pos < ordered.length - 1 ? ordered[pos + 1] : null;
+    var prevIndex = prev && prev.index != null ? prev.index : null;
+    var nextIndex = next && next.index != null ? next.index : null;
+
+    var newIndex;
+    if (prevIndex !== null && nextIndex !== null) {
+        newIndex = (prevIndex + nextIndex) / 2;
+    } else if (prevIndex !== null) {
+        newIndex = prevIndex + 1;
+    } else if (nextIndex !== null) {
+        newIndex = nextIndex - 1;
+    } else {
+        return;
+    }
+
+    var task = gantt.getTask(id);
+    _queueBubble("task_reorder", bubble_fn_reorderTask, {
+        output1: task.bubble_id,
+        output2: newIndex
+    });
 });
 
 // Delete Tasks
