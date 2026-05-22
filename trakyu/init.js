@@ -470,6 +470,29 @@ function initGantt() {
     if (typeof restorePersistedScroll === "function") restorePersistedScroll();
     if (typeof initSCurve === "function") initSCurve();
     if (typeof initBaselines === "function") initBaselines();
+    _hideLoadingOverlay();
+}
+
+function _showLoadingOverlay() {
+    if (document.getElementById("gantt-loading-overlay")) return;
+    var el = document.createElement("div");
+    el.id = "gantt-loading-overlay";
+    el.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:12px;">'
+        + '<div style="width:36px;height:36px;border:4px solid #ddd;border-top-color:#2196f3;border-radius:50%;animation:gantt-spin 0.8s linear infinite;"></div>'
+        + '<span style="color:#555;font-size:14px;font-family:sans-serif;">Cargando proyecto…</span>'
+        + '</div>';
+    el.style.cssText = "position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"
+        + "background:rgba(255,255,255,0.85);z-index:1000;";
+    var style = document.createElement("style");
+    style.textContent = "@keyframes gantt-spin{to{transform:rotate(360deg)}}";
+    el.appendChild(style);
+    var container = document.getElementById("gantt_here");
+    if (container) container.appendChild(el);
+}
+
+function _hideLoadingOverlay() {
+    var el = document.getElementById("gantt-loading-overlay");
+    if (el) el.remove();
 }
 
 // Start only when both DOM and ganttData are ready — whichever arrives last.
@@ -478,6 +501,7 @@ function initGantt() {
 console.log("[Gantt] readyState at script execution:", document.readyState);
 
 function _tryStartGantt() {
+    _showLoadingOverlay();
     if (window.ganttData) {
         console.log("[Gantt] ganttData already set — starting immediately");
         initGantt();
@@ -498,9 +522,11 @@ function _tryStartGantt() {
                 // Keep listening in case data.js loads after the fallback fired
                 document.addEventListener("ganttDataReady", function() {
                     console.log("[Gantt] ganttDataReady received after fallback — refreshing with real data");
+                    _showLoadingOverlay();
                     if (typeof window.refreshGanttData === "function") {
                         window.refreshGanttData(window.ganttData.data, window.ganttData.links);
                     }
+                    _hideLoadingOverlay();
                 }, { once: true });
             }
         }, 3000);
