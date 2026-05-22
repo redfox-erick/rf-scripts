@@ -174,7 +174,7 @@ window.initSCurve = function() {
 
         if (baseline) {
             datasets.push({
-                label: "Baseline",
+                label: "Línea Base",
                 borderColor: "#f59e0b",
                 backgroundColor: "transparent",
                 data: baseline,

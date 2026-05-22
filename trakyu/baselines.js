@@ -29,7 +29,7 @@ window.initBaselines = function() {
         el.style.width  = Math.max(sizes.width, 2) + "px";
         el.style.top    = (sizes.top + barTop + gantt.config.bar_height + 2) + "px";
         el.style.height = "6px";
-        el.title = "Baseline: " +
+        el.title = "Línea Base: " +
             gantt.date.date_to_str("%d/%m/%Y")(task.baseline_start) + " → " +
             gantt.date.date_to_str("%d/%m/%Y")(task.baseline_end);
         return el;
@@ -142,7 +142,7 @@ window.initBaselines = function() {
     var container = document.getElementById("gantt_here");
     var btn = document.createElement("button");
     btn.id = "gantt-baseline-btn";
-    btn.textContent = "📐 Baseline";
+    btn.textContent = "📐 Línea Base";
     var slot = document.getElementById("gantt-toolbar-slot");
     if (slot) {
         slot.parentNode.insertBefore(btn, slot);
