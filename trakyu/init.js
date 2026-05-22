@@ -151,6 +151,9 @@ gantt.templates.task_class = function(start, end, task) {
 };
 
 gantt.config.columns = [
+  {name: "drag_handle", label: "", width: 28, align: "center",
+    template: function() { return "<span class='gantt-drag-handle'>⠿</span>"; }
+  },
   {name: "text", align: "left", label: "Descripción", tree: true, width: "*", min_width: 250, resize: true,
     template: function(task) {
       if (isCompleted(task)) return "<span class='task-done-check'>✓</span> " + task.text;

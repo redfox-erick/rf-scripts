@@ -1,3 +1,19 @@
+/* Drag handle column */
+.gantt-drag-handle {
+  color: #bbb;
+  font-size: 16px;
+  line-height: 1;
+  display: block;
+  transition: color 0.15s;
+}
+.gantt_row:hover .gantt-drag-handle {
+  color: #888;
+  cursor: grab;
+}
+.gantt_row:active .gantt-drag-handle {
+  cursor: grabbing;
+}
+
 /* Grid font size */
 .gantt_cell,
 .gantt_tree_content,
