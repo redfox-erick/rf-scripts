@@ -484,16 +484,24 @@ function _tryStartGantt() {
     } else {
         console.log("[Gantt] waiting for ganttDataReady event...");
         document.addEventListener("ganttDataReady", initGantt, { once: true });
-        // Fallback: if data never arrives, start with whatever is on window after 3s
+        // Fallback: if data never arrives after 3s, init with empty data and keep listening.
+        // If data.js loads late, ganttDataReady will still fire and refreshGanttData will pick it up.
         setTimeout(function() {
             if (!gantt.getTaskCount || gantt.getTaskCount() === 0) {
                 console.warn("[Gantt] ganttDataReady never fired — starting with fallback data");
+                document.removeEventListener("ganttDataReady", initGantt);
                 window.ganttData = {
                     data: window.BUBBLE_GANTT_DATA || [],
                     links: window.BUBBLE_GANTT_LINKS || []
                 };
-                document.removeEventListener("ganttDataReady", initGantt);
                 initGantt();
+                // Keep listening in case data.js loads after the fallback fired
+                document.addEventListener("ganttDataReady", function() {
+                    console.log("[Gantt] ganttDataReady received after fallback — refreshing with real data");
+                    if (typeof window.refreshGanttData === "function") {
+                        window.refreshGanttData(window.ganttData.data, window.ganttData.links);
+                    }
+                }, { once: true });
             }
         }, 3000);
     }
