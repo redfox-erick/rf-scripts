@@ -8,9 +8,6 @@ window.ganttData = {
 };
 
 console.log("[Gantt] window.ganttData set:", window.ganttData);
-// Signal init.js that data is ready (handles the case where data.js loads after init.js)
-console.log("[Gantt] dispatching ganttDataReady");
-document.dispatchEvent(new CustomEvent("ganttDataReady"));
 
 // Validate Gantt data before parsing
 var validateDates = function(tasks) {
@@ -36,6 +33,10 @@ gantt.attachEvent("onBeforeParse", function(data) {
 // Bubble calls this via "Run JavaScript" AFTER a workflow completes (create/update/delete task or link).
 // Pass tasks and links directly from Bubble's expression to avoid reading stale window globals.
 // Usage: refreshGanttData(BUBBLE_GANTT_DATA, BUBBLE_GANTT_LINKS)
+// Dispatch after refreshGanttData is defined so the fallback listener in init.js can call it immediately
+console.log("[Gantt] dispatching ganttDataReady");
+document.dispatchEvent(new CustomEvent("ganttDataReady"));
+
 window.refreshGanttData = function(tasks, links) {
     var scroll = gantt.getScrollState();
     var fresh = {
