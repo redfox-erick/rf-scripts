@@ -107,3 +107,23 @@ Repeated drags, resizes, or quick edits fire multiple `bubble_fn_updateTask` cal
 10. **Bubble call debounce queue** — `_queueBubble(key, fn, payload)` wraps all `bubble_fn_*` calls. 600ms debounce window, last-write-wins per task ID. Delete cancels any pending create/update for the same ID. Flush shows "Guardando…" overlay for 1.2s. Covers: `createTask`, `updateTask`, `deleteTask`, `createLink`, `updateLink`, `deleteLink`.
 
 11. **data.js / init.js load coordination** — `data.js` dispatches `ganttDataReady` after setting `window.ganttData`. `init.js` checks for existing data or waits for the event. 3-second fallback if event never fires.
+
+---
+
+## Pending tasks
+
+_None._
+
+---
+
+## Completed tasks
+
+### ✅ P1 — MS Project `sort_order` import and persistence
+
+- Bubble: `index` field (decimal) added to Task type, populated from MS Project `ID` on import.
+- Bubble queries sort by `index` ascending.
+- `gantt.sort()` removed — order comes entirely from the data array order.
+- `order_branch = true` enables drag-to-reorder within the same parent level.
+- `onAfterRowReorder` uses fractional indexing (midpoint between neighbors) so only the moved task needs a Bubble update.
+- Bubble function: `bubble_fn_reorderTask(output1: bubble_id, output2: new_index)`.
+- Tasks include `bubble_id` field in `BUBBLE_GANTT_DATA` for the reorder callback.
