@@ -92,7 +92,7 @@ gantt.attachEvent("onAfterTaskUpdate", function(id, item) {
 gantt.attachEvent("onAfterRowReorder", function(id) {
     if (typeof bubble_fn_reorderTasks !== "function") return;
     var ids = [];
-    gantt.eachTask(function(task) { ids.push(task.id); });
+    gantt.eachTask(function(task) { ids.push(task.bubble_id); });
     _queueBubble("task_reorder", bubble_fn_reorderTasks, { outputlist1: ids });
 });
 
