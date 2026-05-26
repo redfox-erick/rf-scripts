@@ -1,12 +1,102 @@
+/* Drag handle column */
+.gantt-drag-handle {
+  color: #bbb;
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  transition: color 0.15s;
+}
+.gantt_row:hover .gantt-drag-handle {
+  color: #888;
+  cursor: grab;
+}
+.gantt_row:active .gantt-drag-handle {
+  cursor: grabbing;
+}
+
+/* Grid font size */
+.gantt_cell,
+.gantt_tree_content,
+.gantt_grid_head_cell {
+  font-size: 12px;
+}
+
 /* barra */
 .gantt_task_line{
-  background: #36ac81;
-  border-color: #36ac81;
+  background: #c8cdd5;
+  border-color: #9ca3af;
+}
+
+/* completed tasks — lock cursor on bar */
+.gantt_task_line.task_completed {
+  cursor: not-allowed;
+}
+
+/* faded green row background for completed tasks */
+.gantt_row.task_completed,
+.gantt_task_row.task_completed {
+    background: rgba(54, 172, 129, 0.07);
+}
+
+/* green check in grid column */
+.task-done-check {
+  color: #36ac81;
+  font-weight: bold;
+  margin-right: 2px;
+}
+
+/* parent / project tasks — MS Project-style summary bar */
+.gantt_task_line.task-parent {
+  background: #1d5f47;
+  border-color: #1d5f47;
+  border-radius: 0;
+  height: 8px !important;
+  overflow: visible;
+}
+.gantt_task_line.task-parent .gantt_task_progress,
+.gantt_task_line.task-parent .gantt_task_content {
+  display: none;
+}
+/* left downward triangle */
+.gantt_task_line.task-parent::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 8px 7px 0 0;
+  border-color: #1d5f47 transparent transparent transparent;
+}
+/* right downward triangle */
+.gantt_task_line.task-parent::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 8px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 8px 0 0 7px;
+  border-color: #1d5f47 transparent transparent transparent;
+}
+
+/* milestones — black diamond */
+.gantt_task_line.gantt_milestone {
+  background: #1e293b !important;
+  border-color: #1e293b !important;
+}
+.gantt_task_line.gantt_milestone.gantt_selected {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #36ac81 !important;
 }
 
 /* progreso dentro de la barra */
 .gantt_task_progress{
-  background: rgba(14,165,233,.6);
+  background: #36ac81;
 }
 
 /* El puntito/bullet (en algunas versiones es gantt_qi_title_bar) */
@@ -31,22 +121,195 @@
   color: #f97066;
 }
 
+/* ===== Horizontal Toolbar ===== */
+#gantt-toolbar-row {
+    overflow: hidden;
+}
+
+#gantt-toolbar {
+    width: 100%;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 8px;
+    background: #fff;
+    border-bottom: 1px solid #d0d5dd;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.gantt-toolbar-sep {
+    width: 1px;
+    height: 20px;
+    background: #d0d5dd;
+    flex-shrink: 0;
+    margin: 0 2px;
+}
+
+/* All single toolbar buttons */
+#gantt-toolbar > button {
+    background: #fff;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    transition: background 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+#gantt-toolbar > button:hover { background: #f2f4f7; }
+
+/* Button groups inside toolbar */
+#gantt-toolbar #gantt-zoom-group,
+#gantt-toolbar #gantt-tree-group {
+    position: static;
+    display: flex;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    flex-shrink: 0;
+}
+
+/* zoom/tree buttons inside groups */
+.gantt-zoom-btn {
+    background: #fff;
+    border: none;
+    border-left: 1px solid #d0d5dd;
+    padding: 3px 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+    line-height: 1;
+}
+.gantt-zoom-btn:first-child { border-left: none; }
+.gantt-zoom-btn:hover { background: #f2f4f7; }
+
+/* Active states */
+#gantt-toolbar #gantt-scurve-btn.active {
+    background: #36ac81;
+    color: #fff;
+    border-color: #36ac81;
+}
+#gantt-toolbar #gantt-baseline-btn.active {
+    background: #1d5f47;
+    color: #fff;
+    border-color: #1d5f47;
+}
+#gantt-toolbar #gantt-grid-btn.active {
+    background: #1d5f47;
+    color: #fff;
+    border-color: #1d5f47;
+}
+
+/* Baseline bar (rendered below the live task bar) */
+.baseline-bar {
+    position: absolute;
+    border-radius: 3px;
+    background: #1d5f47;
+    opacity: 0.7;
+}
+
+/* Ghost task rows (deleted from live, only in baseline) */
+.task-ghost .gantt_task_line {
+    background: #86efac;
+    border-color: #1d5f47;
+    opacity: 0.5;
+    pointer-events: none;
+}
+.gantt_row.task-ghost,
+.gantt_row.gantt_row_task.task-ghost {
+    background: #f0fdf4;
+    color: #1d5f47;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+/* Columns dropdown */
+#gantt-col-dropdown {
+    position: absolute;
+    top: 34px;
+    right: 8px;
+    z-index: 101;
+    background: #fff;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    padding: 6px 0;
+    min-width: 130px;
+}
+.gantt-col-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.gantt-col-row:hover { background: #f2f4f7; }
+.gantt-col-row input { cursor: pointer; margin: 0; }
+
+/* S-curve full-coverage panel */
+#scurve-panel {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 12px;
+    box-sizing: border-box;
+}
+
+#scurve-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+}
+
+#scurve-header span {
+    font-size: 12px;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+#scurve-close-btn {
+    background: #fff;
+    border: 1px solid #d0d5dd;
+    border-radius: 5px;
+    padding: 2px 8px;
+    font-size: 11px;
+    cursor: pointer;
+}
+#scurve-close-btn:hover { background: #f2f4f7; }
+
+#scurve-canvas {
+    flex: 1;
+    min-height: 0;
+}
+
 /* Estilos base para el Tooltip */
 #bubble-tooltip {
-    visibility: hidden; /* Inicialmente oculto */
+    visibility: hidden;
     opacity: 0;
-    position: absolute; /* Debe ser absoluto para flotar sobre el contenido */
-    z-index: 1000; /* Asegura que esté por encima de otros elementos de Bubble */
+    position: absolute;
+    z-index: 1000;
     background-color: #333333;
     color: #ffffff;
     text-align: center;
     padding: 8px 12px;
-    border-radius: 8px; /* Bordes redondeados */
+    border-radius: 8px;
     font-size: 14px;
     line-height: 1.4;
-    transition: opacity 0.3s ease, transform 0.3s ease; /* Transición suave */
-    pointer-events: none; /* No debe interferir con clics */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Sombra elegante */
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     max-width: 250px;
 }
 
@@ -54,7 +317,7 @@
 #bubble-tooltip::after {
     content: "";
     position: absolute;
-    top: 100%; /* Posiciona la flecha en la parte inferior del tooltip */
+    top: 100%;
     left: 50%;
     margin-left: -5px;
     border-width: 5px;
@@ -62,9 +325,49 @@
     border-color: #333333 transparent transparent transparent;
 }
 
+/* Saving overlay — blocks interaction while flushing to Bubble */
+#gantt-saving-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 300;
+    background: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: all;
+    cursor: wait;
+}
+#gantt-saving-overlay span {
+    background: #1d5f47;
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Dependency conflict toast */
+#gantt-toast {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: #c0392b;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 200;
+    pointer-events: none;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+}
+
 /* Clase para mostrar el Tooltip */
 .tooltip-visible {
     visibility: visible !important;
     opacity: 1 !important;
-    transform: translateY(-5px); /* Efecto "pop-up" */
+    transform: translateY(-5px);
 }
+

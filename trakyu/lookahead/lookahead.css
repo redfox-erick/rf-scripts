@@ -1,0 +1,118 @@
+/* Lookahead — timeline styles.
+   Works for any container ID — no hardcoded #lookahead-timeline selectors
+   except as a convenience alias for Bubble's existing HTML element.
+   The factory adds the class .lookahead-container to every container it manages. */
+
+/* ---- Container defaults ---- */
+.lookahead-container,
+#lookahead-timeline {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+/* ---- Drop active state ---- */
+.lookahead-container.drop-active::after,
+#lookahead-timeline.drop-active::after {
+    content: "Suelta para programar";
+    position: absolute;
+    inset: 0;
+    background: rgba(54, 172, 129, 0.08);
+    border: 2px dashed #36ac81;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #36ac81;
+    font-weight: 500;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* ---- Locked state ---- */
+.lookahead-container.lookahead-locked,
+#lookahead-timeline.lookahead-locked {
+    opacity: 0.85;
+    pointer-events: none;
+}
+.lookahead-container.lookahead-locked::after,
+#lookahead-timeline.lookahead-locked::after {
+    content: "🔒 Lookahead comprometido — solo lectura";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(29, 95, 71, 0.9);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 14px;
+    border-radius: 20px;
+    z-index: 20;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+/* ---- Period shading — grey outside the lookahead window ---- */
+.vis-item.vis-background.period-outside {
+    background: rgba(0, 0, 0, 0.055);
+    border: none;
+}
+
+/* ---- Period boundary lines (addCustomTime with id "*-period-start" / "*-period-end") ---- */
+.vis-custom-time[class*="-period-start"],
+.vis-custom-time[class*="-period-end"] {
+    background-color: #36ac81 !important;
+    width: 2px !important;
+    cursor: default !important;
+}
+.vis-custom-time[class*="-period-start"] .vis-custom-time-marker,
+.vis-custom-time[class*="-period-end"] .vis-custom-time-marker {
+    display: none;
+}
+
+/* ---- Items outside the period (dimmed) ---- */
+.vis-item.out-of-range {
+    opacity: 0.45 !important;
+}
+
+/* ===== vis-timeline overrides ===== */
+.vis-timeline {
+    border: none !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+.vis-time-axis .vis-text {
+    font-size: 11px !important;
+    color: #64748b !important;
+}
+
+.vis-current-time {
+    background-color: #ef4444 !important;
+    width: 2px !important;
+}
+
+.vis-item {
+    border-radius: 5px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    border-width: 0 !important;
+    color: #fff !important;
+}
+
+.vis-item.vis-selected {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #36ac81 !important;
+}
+
+.vis-item .vis-item-content {
+    padding: 2px 8px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Weekend columns */
+.vis-time-axis .vis-grid.vis-saturday,
+.vis-time-axis .vis-grid.vis-sunday {
+    background: rgba(0, 0, 0, 0.02);
+}

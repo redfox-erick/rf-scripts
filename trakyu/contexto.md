@@ -65,3 +65,101 @@ Responsable de:
 ```
 
 7. **dhtmlxgantt.js** y **dhtmlxgantt.css**: Archivos de la versión Pro de dhtmlX Gantt cargados en el repositorio para habilitar las funcionalidades avanzadas.
+
+---
+
+# ⚠️ Lecciones aprendidas
+
+## Bubble re-renderiza los elementos HTML al guardar datos
+Cuando `bubble_fn_updateTask` dispara un workflow que guarda un Thing, Bubble detecta que el dato cambió y **re-renderiza el elemento HTML** que tiene como fuente de datos ese Thing. Esto ejecuta los scripts nuevamente, causando:
+- Re-inicialización completa del Gantt (init.js, gantt.parse(), S-curve, baselines).
+- Errores de `SyntaxError: Identifier already declared` para cualquier `const` o `let` declarado en el top level.
+
+**Regla:** Todos los identificadores en el top level de scripts que Bubble puede re-ejecutar deben usar `var`, nunca `const` o `let`.
+
+## Coordinación de carga entre elementos HTML de Bubble
+Cuando el código está dividido en múltiples elementos HTML (e.g. `data.js` e `init.js`), ambos se ejecutan al mismo tiempo sin orden garantizado. El patrón correcto es el **custom event handshake**:
+- El elemento de datos dispara `document.dispatchEvent(new CustomEvent("ganttDataReady"))` después de setear `window.ganttData`.
+- El elemento de init escucha ese evento, pero también verifica si `window.ganttData` ya existe (por si el dato llegó primero).
+- Se agrega un fallback de timeout (3s) por si el evento nunca llega.
+
+## onAfterTaskUpdate se dispara doble con auto-scheduling
+Cuando el usuario arrastra una tarea con dependencias, DHTMLX dispara `onAfterTaskUpdate` dos veces:
+1. Con la posición donde el usuario soltó la tarea.
+2. Con la posición corregida por auto-scheduling.
+
+La segunda llamada corrige la primera, pero genera dos llamadas a `bubble_fn_updateTask`. Esto se mitiga con el sistema de debounce.
+
+## Llamadas rápidas a Bubble saturan los workflows
+Cambios rápidos del usuario (drag repetido, resize) generan múltiples llamadas a `bubble_fn_updateTask` en poco tiempo, lo que satura Bubble y lo hace lento.
+
+**Solución implementada:** Cola de debounce (`_queueBubble`) con ventana de 600ms. Actualizaciones al mismo task ID colapsan en una sola llamada (last-write-wins). Al hacer flush se muestra un overlay "Guardando…" que bloquea interacción por 1.2s.
+
+---
+
+# 🚀 Estado actual del proyecto
+
+## Implementaciones recientes
+1. **Integración de dhtmlX Gantt Pro**:
+   - Funcionalidades avanzadas habilitadas: auto-scheduling, undo/redo.
+   - Archivos Pro (`dhtmlxgantt.js` y `dhtmlxgantt.css`) añadidos al repositorio.
+
+2. **Validación de datos**:
+   - Lógica añadida en `data.js` para validar los campos `start_date` y `end_date`.
+   - Errores de validación se registran en la consola para facilitar el debugging.
+
+3. **Refactorización de lógica de tooltips**:
+   - Lógica de tooltips optimizada en `functions.js` para mejorar la legibilidad y reutilización.
+
+8. **Dependencias FS + sin flecha de progreso** ✅:
+   - `drag_progress = false` elimina la flecha de arrastre de progreso en las barras.
+   - `drag_links = true` habilita el dibujo nativo de dependencias.
+   - `onBeforeLinkAdd` rechaza cualquier tipo que no sea FS (tipo "0").
+   - `onAfterLinkAdd/Update/Delete` llaman a `bubble_fn_createLink`, `bubble_fn_updateLink`, `bubble_fn_deleteLink` con payload `{output1: id, output2: source, output3: target, output4: type}`.
+
+7. **Ocultar / mostrar columnas** ✅:
+   - Botón flotante "☰ Columnas" abre un dropdown con checkboxes.
+   - `text` siempre visible; toggleables: `start_date`, `end_date`, `avance`, `add`.
+   - Usa `col.hide = true/false` + `gantt.render()` (enfoque nativo DHTMLX).
+   - Estado guardado en localStorage bajo `trakyu_col_visibility`, restaurado antes de `gantt.init()`.
+
+6. **Curva S** ✅:
+   - Nuevo archivo `scurve.js` con toda la lógica del overlay.
+   - Usa plugin `overlay` de DHTMLX + Chart.js 2.7.3 (CDN en el header de Bubble).
+   - Muestra 3 líneas: Planificado, Real, Proyectado (dashed).
+   - Botón toggle apilado debajo del botón fullscreen, se pone verde cuando está activo.
+   - Barras del Gantt se atenúan al 40% de opacidad cuando el overlay está visible.
+   - `initSCurve()` es llamado desde `initGantt()` en init.js tras `gantt.parse()`.
+
+5. **Pantalla completa** ✅:
+   - Botón flotante inyectado en `#gantt_here` tras `gantt.init()`.
+   - Usa la API nativa del navegador (`requestFullscreen` / `exitFullscreen`).
+   - Etiqueta del botón cambia entre "⛶ Pantalla completa" y "✕ Salir".
+   - `gantt.render()` se llama en `fullscreenchange` para refluir el layout.
+
+4. **Columnas dinámicas con resize** ✅:
+   - `gantt.config.keep_grid_width = false` para permitir resize independiente por columna.
+   - `resize: true` añadido a todas las columnas (excepto el botón `add`).
+   - Anchos guardados en `localStorage` bajo la clave `trakyu_col_widths` al soltar el resize.
+   - Anchos restaurados automáticamente en cada carga vía `applyColWidths()` antes de `gantt.init()`.
+
+9. **Toast de conflicto de dependencias** ✅:
+   - `showGanttToast(msg)` inyecta un div `#gantt-toast` en `#gantt_here`.
+   - Se muestra en la esquina superior derecha, fondo rojo (`#c0392b`), desaparece a los 4s.
+   - Se dispara en dos casos:
+     - `onAfterAutoSchedule`: si la tarea fue movida más de 1 día por auto-scheduling.
+     - `onAutoScheduleCircularLink`: si se detecta una dependencia circular.
+
+10. **Cola de debounce para llamadas a Bubble** ✅:
+    - `_queueBubble(key, fn, payload)` en `functions.js` reemplaza todas las llamadas directas a `bubble_fn_*`.
+    - Ventana de debounce: 600ms. Actualizaciones al mismo task ID colapsan (last-write-wins).
+    - Un delete cancela cualquier create/update pendiente para el mismo task ID.
+    - Al hacer flush: overlay semitransparente "Guardando…" bloquea el Gantt por 1.2s.
+    - Afecta: `bubble_fn_createTask`, `bubble_fn_updateTask`, `bubble_fn_deleteTask`, `bubble_fn_createLink`, `bubble_fn_updateLink`, `bubble_fn_deleteLink`.
+
+11. **Coordinación data.js / init.js con custom event** ✅:
+    - `data.js` dispara `document.dispatchEvent(new CustomEvent("ganttDataReady"))` tras setear `window.ganttData`.
+    - `init.js` verifica si `window.ganttData` ya existe al ejecutarse; si no, espera el evento.
+    - Fallback de 3s: si el evento nunca llega, intenta iniciar con `window.BUBBLE_GANTT_DATA` directamente.
+
+---

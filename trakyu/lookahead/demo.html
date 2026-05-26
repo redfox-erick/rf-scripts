@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lookahead — Demo</title>
+    <link href="https://unpkg.com/vis-timeline@7.7.3/styles/vis-timeline-graph2d.min.css" rel="stylesheet">
+    <link href="lookahead.css" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 13px; background: #f8fafc; overflow: hidden; }
+
+        .toolbar {
+            height: 44px; background: #fff; border-bottom: 1px solid #e2e8f0;
+            display: flex; align-items: center; padding: 0 16px; gap: 10px;
+        }
+        .toolbar h2 { font-size: 14px; font-weight: 600; color: #1e293b; flex: 1; }
+        .toolbar label { font-size: 12px; color: #64748b; }
+        .toolbar select, .toolbar button {
+            border: 1px solid #d0d5dd; border-radius: 6px; padding: 4px 12px;
+            font-size: 12px; background: #fff; cursor: pointer; color: #374151;
+        }
+        .toolbar button:hover { background: #f1f5f9; }
+        .toolbar button.active { background: #1d5f47; color: #fff; border-color: #1d5f47; }
+
+        #timeline {
+            position: absolute;
+            top: 44px; bottom: 28px; left: 0; right: 0;
+            overflow: hidden;
+        }
+
+        .info-bar {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            height: 28px; background: #f1f5f9; border-top: 1px solid #e2e8f0;
+            display: flex; align-items: center; padding: 0 14px;
+            font-size: 11px; color: #64748b;
+        }
+        .info-bar span b { color: #1e293b; }
+    </style>
+</head>
+<body>
+
+<div class="toolbar">
+    <h2 id="toolbar-title">📅 Lookahead</h2>
+    <label>Periodo:</label>
+    <select id="sel-periodo">
+        <option value="2">2 semanas</option>
+        <option value="4" selected>4 semanas</option>
+        <option value="6">6 semanas</option>
+        <option value="8">8 semanas</option>
+    </select>
+    <button id="btn-today">Hoy</button>
+    <button id="btn-lock">🔒 Bloquear</button>
+</div>
+
+<div id="timeline" class="lookahead-container"></div>
+
+<div class="info-bar">
+    <span>Arrastra para mover · Jala los extremos para cambiar duración · <b>Supr</b> para eliminar</span>
+    <span id="info-sel" style="margin-left:auto;"></span>
+</div>
+
+<script src="https://unpkg.com/vis-timeline@7.7.3/standalone/umd/vis-timeline-graph2d.min.js"></script>
+<script src="lookahead.js"></script>
+<script>
+window.addEventListener("load", function () {
+
+    // START comes from Bubble (BUBBLE_LOOKAHEAD_START). In demo: today.
+    var START = new Date();
+    START.setHours(0, 0, 0, 0);
+
+    var WEEKS = 4;
+
+    function addDays(d, n) { var r = new Date(d); r.setDate(r.getDate() + n); return r; }
+    function fmt(d)         { return new Date(d).toLocaleDateString("es-MX", { day: "2-digit", month: "short" }); }
+
+    // ---- Demo task data (relative to today) ----
+    var demoItems = [
+        { id: 1, taskId: "t1", text: "Colada de Losa",       start: addDays(START, 0),  end: addDays(START, 3),  color: "#f59e0b" },
+        { id: 2, taskId: "t2", text: "Estructura de Acero",  start: addDays(START, 1),  end: addDays(START, 8),  color: "#3b82f6" },
+        { id: 3, taskId: "t3", text: "HVAC Zona B",          start: addDays(START, 5),  end: addDays(START, 12), color: "#8b5cf6" },
+        { id: 4, taskId: "t4", text: "Conduit Eléctrico",    start: addDays(START, 11), end: addDays(START, 15), color: "#06b6d4" },
+        { id: 5, taskId: "t5", text: "Muros Interiores L1",  start: addDays(START, 14), end: addDays(START, 21), color: "#f97316" },
+        { id: 6, taskId: "t6", text: "Stack de Plomería",    start: addDays(START, 19), end: addDays(START, 23), color: "#36ac81" },
+        // Starts before the period
+        { id: 7, taskId: "t7", text: "Cimentación Bloque B ◀", start: addDays(START, -18), end: addDays(START, 2), color: "#94a3b8", className: "out-of-range" },
+        // Starts inside, ends after the period
+        { id: 8, taskId: "t8", text: "Instalación Ventanas ▶", start: addDays(START, 22), end: addDays(START, 36), color: "#ec4899" },
+        // Completely after the period
+        { id: 9, taskId: "t9", text: "Pintura Exterior ▶▶",    start: addDays(START, 32), end: addDays(START, 40), color: "#94a3b8", className: "out-of-range" }
+    ];
+
+    // ---- Create timeline via factory ----
+    var tl = window.createLookaheadTimeline({
+        containerId: "timeline",
+        weeks:  WEEKS,
+        start:  START,
+        items:  demoItems,
+        locked: false,
+        onPlace:  function (d) { console.log("[Demo] place",  d); },
+        onUpdate: function (d) {
+            console.log("[Demo] update", d);
+            // Show updated info in the bar
+            var start = new Date(d.output2), end = new Date(d.output3);
+            var days = Math.round((end - start) / 86400000);
+            document.getElementById("info-sel").textContent =
+                fmt(start) + " → " + fmt(end) + " (" + days + " días)";
+        },
+        onRemove: function (d) {
+            console.log("[Demo] remove", d);
+            document.getElementById("info-sel").textContent = "";
+        }
+    });
+
+    if (!tl) return; // vis not loaded
+
+    // ---- Update toolbar title ----
+    var endDate = addDays(START, WEEKS * 7);
+    document.getElementById("toolbar-title").textContent =
+        "📅 Lookahead — " + WEEKS + " semanas (" + fmt(START) + " – " + fmt(endDate) + ")";
+
+    // ---- Controls ----
+    document.getElementById("sel-periodo").addEventListener("change", function () {
+        var weeks = +this.value;
+        tl.setPeriod(weeks);
+        var newEnd = addDays(START, weeks * 7);
+        document.getElementById("toolbar-title").textContent =
+            "📅 Lookahead — " + weeks + " semana" + (weeks > 1 ? "s" : "") +
+            " (" + fmt(START) + " – " + fmt(newEnd) + ")";
+    });
+
+    document.getElementById("btn-today").addEventListener("click", function () {
+        tl.scrollTo(new Date());
+    });
+
+    var locked = false;
+    document.getElementById("btn-lock").addEventListener("click", function () {
+        locked = !locked;
+        tl.setLocked(locked);
+        this.textContent = locked ? "🔓 Desbloquear" : "🔒 Bloquear";
+        this.classList.toggle("active", locked);
+    });
+
+});
+</script>
+</body>
+</html>
