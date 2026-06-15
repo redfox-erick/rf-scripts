@@ -1,14 +1,11 @@
 // Configuración inicial del Gantt
 console.log("[Gantt] init.js loaded");
-
 // Guard: define isCompleted and calcularAvance here so templates work regardless
 // of whether functions.js has loaded yet. functions.js will redefine them — that's fine.
 function isCompleted(task) { return task.progress >= 1; }
 function calcularAvance(task) { return Math.round((task.progress || 0) * 100); }
-
-// Fix #1: Single plugins() call — second call was overwriting the first, losing quick_info/tool_tip/marker/export_api
-gantt.plugins({ quick_info: true, tool_tip: true, marker: true, export_api: true, auto_scheduling: true, undo: true });
-
+// Fix #1: Single plugins() call — auto_scheduling removed from plugins to avoid recalculation
+gantt.plugins({ quick_info: true, tool_tip: true, marker: true, export_api: true, undo: true });
 var today = new Date();
 gantt.addMarker({
   start_date: today,
@@ -16,7 +13,6 @@ gantt.addMarker({
   text: "Hoy",
   title: "Hoy: " + gantt.date.date_to_str(gantt.config.task_date)(today)
 });
-
 gantt.i18n.setLocale("es");
 gantt.config.grid_width = 920;
 gantt.config.keep_grid_width = false; // allow individual column resizing
@@ -24,10 +20,11 @@ gantt.config.row_height = 30;
 gantt.config.bar_height = 20;
 gantt.config.date_format = "%Y-%m-%d %H:%i";
 gantt.config.work_time = false;
-
+// Fix #2: Disable auto_scheduling so DHTMLX respects start_date/end_date from Bubble as-is
+gantt.config.auto_scheduling = false;
+gantt.config.schedule_from_end = false;
 // --- Column width persistence ---
 var COL_WIDTHS_KEY = "trakyu_col_widths";
-
 function saveColWidths() {
   var widths = {};
   gantt.config.columns.forEach(function(col) {
@@ -35,7 +32,6 @@ function saveColWidths() {
   });
   localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify(widths));
 }
-
 function applyColWidths() {
   var saved = localStorage.getItem(COL_WIDTHS_KEY);
   if (!saved) return;
@@ -50,15 +46,12 @@ function applyColWidths() {
     localStorage.removeItem(COL_WIDTHS_KEY); // discard corrupt data
   }
 }
-
 gantt.attachEvent("onColumnResizeEnd", function(index, column, newWidth) {
   saveColWidths();
   return true;
 });
-
 // --- Column visibility persistence ---
 var COL_VISIBILITY_KEY = "trakyu_col_visibility";
-
 // Columns the user can toggle (text is always visible)
 var TOGGLEABLE_COLS = [
   { name: "start_date", label: "Inicio" },
@@ -67,7 +60,6 @@ var TOGGLEABLE_COLS = [
   { name: "avance",     label: "Avance" },
   { name: "add",        label: "Agregar" }
 ];
-
 function saveColVisibility() {
   var state = {};
   gantt.config.columns.forEach(function(col) {
@@ -75,7 +67,6 @@ function saveColVisibility() {
   });
   localStorage.setItem(COL_VISIBILITY_KEY, JSON.stringify(state));
 }
-
 function applyColVisibility() {
   var saved = localStorage.getItem(COL_VISIBILITY_KEY);
   if (!saved) return;
@@ -90,10 +81,8 @@ function applyColVisibility() {
     localStorage.removeItem(COL_VISIBILITY_KEY);
   }
 }
-
 // --- Open task state persistence ---
 var OPEN_TASKS_KEY = "trakyu_open_tasks";
-
 function saveOpenTasks() {
   var openIds = [];
   gantt.eachTask(function(task) {
@@ -101,7 +90,6 @@ function saveOpenTasks() {
   });
   localStorage.setItem(OPEN_TASKS_KEY, JSON.stringify(openIds));
 }
-
 function restoreOpenTasks() {
   var saved = localStorage.getItem(OPEN_TASKS_KEY);
   if (!saved) return;
@@ -119,10 +107,8 @@ function restoreOpenTasks() {
     localStorage.removeItem(OPEN_TASKS_KEY);
   }
 }
-
 gantt.attachEvent("onTaskOpened", function() { saveOpenTasks(); });
 gantt.attachEvent("onTaskClosed", function() { saveOpenTasks(); });
-
 gantt.config.layout = {
   css: "gantt_container",
   rows: [
@@ -142,14 +128,12 @@ gantt.config.layout = {
     }
   ]
 };
-
 gantt.templates.task_class = function(start, end, task) {
   if (task.type === gantt.config.types.milestone) return ""; // let DHTMLX render diamond natively
   if (isCompleted(task)) return "task_completed";
   if (gantt.hasChild(task.id) || task.type === gantt.config.types.project) return "task-parent";
   return "";
 };
-
 gantt.config.columns = [
   {name: "drag_handle", label: "", width: 28, align: "center",
     template: function() { return "<span class='gantt-drag-handle'>⠿</span>"; }
@@ -187,12 +171,10 @@ gantt.config.columns = [
   },
 {name: "add", label:"", width: 40}
 ];
-
 gantt.templates.task_text = function(start, end, task){
   if (gantt.hasChild(task.id) || task.type === gantt.config.types.project) return "";
   return task.text;
 };
-
 (function () {
   var zoomLevels = [
     { name: "day", scales: [{ unit: "month", format: "%F - %Y" }, { unit: "day", format: "%D %j" }]},
@@ -207,17 +189,13 @@ gantt.templates.task_text = function(start, end, task){
   };
   window.zoom_in  = function() { applyZoom(zoomIndex - 1); };
   window.zoom_out = function() { applyZoom(zoomIndex + 1); };
-
   window.fitGantt = function() {
     var range = gantt.getSubtaskDates();
     if (!range.start_date || !range.end_date) return;
-
     var timelineEl = gantt.$task;
     if (!timelineEl) return;
     var timelineWidth = timelineEl.offsetWidth;
-
     var durationDays = Math.max(1, Math.ceil((range.end_date - range.start_date) / 86400000));
-
     // Pick the scale level that fits best
     var unit, levelIndex;
     if (durationDays <= 90) {
@@ -227,7 +205,6 @@ gantt.templates.task_text = function(start, end, task){
     } else {
       unit = "month"; levelIndex = 2;
     }
-
     // Count how many units span the project
     var numUnits = 0;
     var curr = gantt.date[unit + "_start"](new Date(range.start_date));
@@ -235,7 +212,6 @@ gantt.templates.task_text = function(start, end, task){
       curr = gantt.date.add(curr, 1, unit);
       numUnits++;
     }
-
     var colWidth = Math.max(1, Math.floor(timelineWidth / Math.max(numUnits, 1)));
     zoomIndex = levelIndex;
     gantt.config.scales = zoomLevels[levelIndex].scales;
@@ -245,11 +221,9 @@ gantt.templates.task_text = function(start, end, task){
     gantt.config.min_column_width = 80;
   };
 })();
-
 gantt.templates.timeline_cell_class = function (item, date) {
   if (date.getDay() == 0 || date.getDay() == 6) return "weekend";
 };
-
 gantt.attachEvent("onBeforeTaskDrag", function(id){ return !isCompleted(gantt.getTask(id)); });
 gantt.attachEvent("onBeforeLightbox", function(id) { return !isCompleted(gantt.getTask(id)); });
 gantt.attachEvent("onBeforeLinkAdd", function(_id, link) {
@@ -258,18 +232,16 @@ gantt.attachEvent("onBeforeLinkAdd", function(_id, link) {
     if ((source && isCompleted(source)) || (target && isCompleted(target))) return false;
     return link.type === gantt.config.links.finish_to_start;
 });
-
 // Add the license key for dhtmlX Gantt Pro
 gantt.license = "40762312";
-
-// Enable Pro features
-gantt.config.auto_scheduling = true;
+// Fix #3: Disable auto_scheduling and schedule_from_end so end_date from Bubble is never overridden
+gantt.config.auto_scheduling = false;
+gantt.config.schedule_from_end = false;
 gantt.config.undo = true;
 gantt.config.drag_progress = false; // remove progress drag arrow
 gantt.config.drag_links = true;     // enable dependency drawing
 gantt.config.initial_scroll = false; // prevent auto-scroll to first task after parse()
 gantt.config.order_branch = true;   // enable drag-to-reorder within same parent level
-
 // In Bubble, DOMContentLoaded has already fired by the time HTML elements execute.
 // Check readyState and run immediately if the DOM is already ready.
 function initGantt() {
@@ -279,10 +251,8 @@ function initGantt() {
     console.log("[Gantt] window.ganttData:", window.ganttData);
     console.log("[Gantt] BUBBLE_GANTT_DATA:", window.BUBBLE_GANTT_DATA);
     console.log("[Gantt] BUBBLE_GANTT_LINKS:", window.BUBBLE_GANTT_LINKS);
-
     applyColWidths();      // restore saved column widths before rendering
     applyColVisibility(); // restore saved column visibility before rendering
-
     try {
         gantt.init("gantt_here");
         console.log("[Gantt] gantt.init() OK");
@@ -290,30 +260,25 @@ function initGantt() {
         console.error("[Gantt] gantt.init() FAILED:", e);
         return;
     }
-
     // --- Toolbar ---
     (function() {
         var container = document.getElementById("gantt_here");
         container.style.position = "relative";
-
         // Create toolbar inside the DHTMLX layout row
         var toolbarRow = document.getElementById("gantt-toolbar-row");
         var toolbar = document.createElement("div");
         toolbar.id = "gantt-toolbar";
         toolbarRow.appendChild(toolbar);
-
         function makeSep() {
             var sep = document.createElement("div");
             sep.className = "gantt-toolbar-sep";
             return sep;
         }
-
         // 1. Fullscreen button
         var fsBtn = document.createElement("button");
         fsBtn.id = "gantt-fullscreen-btn";
         fsBtn.textContent = "⛶ Pantalla completa";
         toolbar.appendChild(fsBtn);
-
         fsBtn.addEventListener("click", function() {
             if (!document.fullscreenElement) {
                 container.requestFullscreen();
@@ -321,51 +286,42 @@ function initGantt() {
                 document.exitFullscreen();
             }
         });
-
         document.addEventListener("fullscreenchange", function() {
             fsBtn.textContent = document.fullscreenElement ? "✕ Salir" : "⛶ Pantalla completa";
             gantt.render();
         });
-
         // Sentinel slot — scurve.js and baselines.js insertBefore this
         toolbar.appendChild(makeSep());
         var toolbarSlot = document.createElement("span");
         toolbarSlot.id = "gantt-toolbar-slot";
         toolbar.appendChild(toolbarSlot);
-
         // 2. Zoom group
         toolbar.appendChild(makeSep());
         var zoomGroup = document.createElement("div");
         zoomGroup.id = "gantt-zoom-group";
-
         var zoomOut = document.createElement("button");
         zoomOut.className = "gantt-zoom-btn";
         zoomOut.textContent = "−";
         zoomOut.title = "Alejar";
         zoomOut.addEventListener("click", window.zoom_out);
-
         var zoomFit = document.createElement("button");
         zoomFit.className = "gantt-zoom-btn";
         zoomFit.textContent = "↔";
         zoomFit.title = "Ajustar a ventana";
         zoomFit.addEventListener("click", window.fitGantt);
-
         var zoomIn = document.createElement("button");
         zoomIn.className = "gantt-zoom-btn";
         zoomIn.textContent = "+";
         zoomIn.title = "Acercar";
         zoomIn.addEventListener("click", window.zoom_in);
-
         zoomGroup.appendChild(zoomOut);
         zoomGroup.appendChild(zoomFit);
         zoomGroup.appendChild(zoomIn);
         toolbar.appendChild(zoomGroup);
-
         // 3. Tree expand/collapse group
         toolbar.appendChild(makeSep());
         var treeGroup = document.createElement("div");
         treeGroup.id = "gantt-tree-group";
-
         var openAll = document.createElement("button");
         openAll.className = "gantt-zoom-btn";
         openAll.textContent = "▶ Todo";
@@ -374,7 +330,6 @@ function initGantt() {
             gantt.eachTask(function(t) { if (gantt.hasChild(t.id)) gantt.open(t.id); });
             saveOpenTasks();
         });
-
         var closeAll = document.createElement("button");
         closeAll.className = "gantt-zoom-btn";
         closeAll.textContent = "▼ Todo";
@@ -383,18 +338,15 @@ function initGantt() {
             gantt.eachTask(function(t) { if (gantt.hasChild(t.id)) gantt.close(t.id); });
             saveOpenTasks();
         });
-
         treeGroup.appendChild(openAll);
         treeGroup.appendChild(closeAll);
         toolbar.appendChild(treeGroup);
-
         // 4. Columns toggle button
         toolbar.appendChild(makeSep());
         var colBtn = document.createElement("button");
         colBtn.id = "gantt-col-btn";
         colBtn.textContent = "☰ Columnas";
         toolbar.appendChild(colBtn);
-
         // 5. Grid toggle button
         var gridBtn = document.createElement("button");
         gridBtn.id = "gantt-grid-btn";
@@ -406,24 +358,19 @@ function initGantt() {
             gridBtn.classList.toggle("active", !gantt.config.show_grid);
         });
         toolbar.appendChild(gridBtn);
-
         // Column dropdown — child of container so top:34px is relative to #gantt_here
         var colDropdown = document.createElement("div");
         colDropdown.id = "gantt-col-dropdown";
         colDropdown.style.display = "none";
-
         TOGGLEABLE_COLS.forEach(function(def) {
             var col = gantt.config.columns.find(function(c) { return c.name === def.name; });
             if (!col) return;
-
             var row = document.createElement("label");
             row.className = "gantt-col-row";
-
             var checkbox = document.createElement("input");
             checkbox.type = "checkbox";
             checkbox.checked = !col.hide;
             checkbox.dataset.colName = def.name;
-
             checkbox.addEventListener("change", function() {
                 var target = gantt.config.columns.find(function(c) { return c.name === this.dataset.colName; }, this);
                 if (target) {
@@ -432,50 +379,50 @@ function initGantt() {
                     saveColVisibility();
                 }
             });
-
             row.appendChild(checkbox);
             row.appendChild(document.createTextNode(" " + def.label));
             colDropdown.appendChild(row);
         });
-
         container.appendChild(colDropdown);
-
         colBtn.addEventListener("click", function(e) {
             e.stopPropagation();
             colDropdown.style.display = colDropdown.style.display === "none" ? "block" : "none";
         });
-
         // Stop clicks inside the dropdown from bubbling to document (which closes it)
         colDropdown.addEventListener("click", function(e) {
             e.stopPropagation();
         });
-
         document.addEventListener("click", function() {
             colDropdown.style.display = "none";
         });
     })();
-
     // Fall back to raw Bubble globals if data.js hasn't set window.ganttData yet
     var dataToLoad = window.ganttData || {
         data: window.BUBBLE_GANTT_DATA || [],
         links: window.BUBBLE_GANTT_LINKS || []
     };
+    // Fix #4: Strip the 'duration' field from each task so DHTMLX never overrides
+    // end_date with start_date + duration. end_date from Bubble is the source of truth.
+    if (dataToLoad.data && Array.isArray(dataToLoad.data)) {
+        dataToLoad.data = dataToLoad.data.map(function(task) {
+            var t = Object.assign({}, task);
+            delete t.duration;
+            return t;
+        });
+    }
     console.log("[Gantt] dataToLoad:", dataToLoad);
-
     try {
         gantt.parse(dataToLoad);
         console.log("[Gantt] gantt.parse() OK — tasks loaded:", gantt.getTaskCount());
     } catch(e) {
         console.error("[Gantt] gantt.parse() FAILED:", e);
     }
-
     restoreOpenTasks();
     if (typeof restorePersistedScroll === "function") restorePersistedScroll();
     if (typeof initSCurve === "function") initSCurve();
     if (typeof initBaselines === "function") initBaselines();
     _hideLoadingOverlay();
 }
-
 function _showLoadingOverlay() {
     if (document.getElementById("gantt-loading-overlay")) return;
     var el = document.createElement("div");
@@ -492,17 +439,14 @@ function _showLoadingOverlay() {
     var container = document.getElementById("gantt_here");
     if (container) container.appendChild(el);
 }
-
 function _hideLoadingOverlay() {
     var el = document.getElementById("gantt-loading-overlay");
     if (el) el.remove();
 }
-
 // Start only when both DOM and ganttData are ready — whichever arrives last.
 // Case 1: init.js loads after data.js  → window.ganttData already set, start immediately.
 // Case 2: init.js loads before data.js → wait for the ganttDataReady event.
 console.log("[Gantt] readyState at script execution:", document.readyState);
-
 function _tryStartGantt() {
     _showLoadingOverlay();
     if (window.ganttData) {
@@ -538,7 +482,6 @@ function _tryStartGantt() {
         }, 3000);
     }
 }
-
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", _tryStartGantt);
 } else {
