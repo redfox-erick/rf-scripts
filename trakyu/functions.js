@@ -284,12 +284,16 @@ var tooltipManager = (function() {
 
 tooltipManager.attachTooltipEvents('tooltip-no-acceso');
 
-// --- Edición de avance inline en columna ---
+// --- Edición de avance + completar tarea inline en columna ---
 (function() {
-    // SVG de lápiz inline, sin dependencias externas
     var PENCIL_SVG = '<svg class="avance-pencil-icon" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px;cursor:pointer;opacity:0.5;flex-shrink:0;">'
         + '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>'
         + '<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>'
+        + '</svg>';
+
+    // SVG de check para completar tarea
+var CHECK_SVG = '<svg class="avance-complete-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:6px;cursor:pointer;flex-shrink:0;">'
+        + '<polyline points="20 6 9 17 4 12"/>'
         + '</svg>';
 
     document.addEventListener("ganttDataReady", function() {
@@ -309,23 +313,24 @@ tooltipManager.attachTooltipEvents('tooltip-no-acceso');
                 var pct = totalDays > 0 ? Math.round(weightedSum / totalDays * 100) : 0;
                 return "<span class='avance-readonly'>" + pct + "%</span>";
             }
-            // Tareas hoja: % + ícono lápiz
             var pct = Math.round((task.progress || 0) * 100);
+            // Tarea completada: solo lectura
             if (isCompleted(task)) {
                 return "<span class='avance-readonly'>" + pct + "%</span>";
             }
+            // Tarea hoja activa: % + lápiz + check
             return "<span class='avance-editable' data-task-id='" + task.id + "' style='display:inline-flex;align-items:center;cursor:default;'>"
                 + "<span class='avance-pct'>" + pct + "%</span>"
                 + PENCIL_SVG
+                + CHECK_SVG
                 + "</span>";
         };
 
         gantt.render();
     }, { once: true });
 
-    // Click en el ícono lápiz abre el input
+    // Click en lápiz — abre input de avance
     document.addEventListener("click", function(e) {
-        // Detectar click en el ícono SVG o su interior
         var icon = e.target.closest ? e.target.closest(".avance-pencil-icon") : null;
         if (!icon) return;
 
@@ -348,7 +353,6 @@ tooltipManager.attachTooltipEvents('tooltip-no-acceso');
         input.className = "avance-input";
         input.style.cssText = "width:60px;text-align:center;border:1px solid #2196f3;border-radius:3px;padding:1px 4px;font-size:12px;";
 
-        // Bloquear ingreso de valores > 100 en tiempo real
         input.addEventListener("input", function() {
             if (parseInt(this.value, 10) > 100) this.value = 100;
             if (parseInt(this.value, 10) < 0) this.value = 0;
@@ -387,5 +391,32 @@ tooltipManager.attachTooltipEvents('tooltip-no-acceso');
                 gantt.render();
             }
         });
+    });
+
+    // Click en check — confirma y completa la tarea
+    document.addEventListener("click", function(e) {
+        var icon = e.target.closest ? e.target.closest(".avance-complete-icon") : null;
+        if (!icon) return;
+
+        var container = icon.closest(".avance-editable");
+        if (!container) return;
+
+        var taskId = container.getAttribute("data-task-id");
+        if (!taskId || !gantt.isTaskExists(taskId)) return;
+
+        var task = gantt.getTask(taskId);
+        if (isCompleted(task)) return;
+
+        if (!confirm("¿Marcar esta tarea como completada? Esta acción no se puede deshacer.")) return;
+
+        task.progress = 1;
+        gantt.updateTask(taskId);
+        gantt.render();
+
+        if (typeof bubble_fn_completeTask === "function") {
+            _queueBubble("task_complete_" + taskId, bubble_fn_completeTask, {
+                value: Number(taskId)
+            });
+        }
     });
 })();
