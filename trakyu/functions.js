@@ -291,8 +291,7 @@ tooltipManager.attachTooltipEvents('tooltip-no-acceso');
         + '<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>'
         + '</svg>';
 
-    // SVG de check para completar tarea
-var CHECK_SVG = '<svg class="avance-complete-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:6px;cursor:pointer;flex-shrink:0;">'
+    var CHECK_SVG = '<svg class="avance-complete-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:6px;cursor:pointer;flex-shrink:0;">'
         + '<polyline points="20 6 9 17 4 12"/>'
         + '</svg>';
 
@@ -301,7 +300,6 @@ var CHECK_SVG = '<svg class="avance-complete-icon" xmlns="http://www.w3.org/2000
         if (!avanceCol) return;
 
         avanceCol.template = function(task) {
-            // Tareas padre: promedio ponderado, solo lectura
             if (gantt.hasChild(task.id)) {
                 var totalDays = 0, weightedSum = 0;
                 gantt.eachTask(function(child) {
@@ -314,11 +312,9 @@ var CHECK_SVG = '<svg class="avance-complete-icon" xmlns="http://www.w3.org/2000
                 return "<span class='avance-readonly'>" + pct + "%</span>";
             }
             var pct = Math.round((task.progress || 0) * 100);
-            // Tarea completada: solo lectura
             if (isCompleted(task)) {
                 return "<span class='avance-readonly'>" + pct + "%</span>";
             }
-            // Tarea hoja activa: % + lápiz + check
             return "<span class='avance-editable' data-task-id='" + task.id + "' style='display:inline-flex;align-items:center;cursor:default;'>"
                 + "<span class='avance-pct'>" + pct + "%</span>"
                 + PENCIL_SVG
@@ -398,6 +394,8 @@ var CHECK_SVG = '<svg class="avance-complete-icon" xmlns="http://www.w3.org/2000
         var icon = e.target.closest ? e.target.closest(".avance-complete-icon") : null;
         if (!icon) return;
 
+        e.stopPropagation();
+
         var container = icon.closest(".avance-editable");
         if (!container) return;
 
@@ -414,9 +412,7 @@ var CHECK_SVG = '<svg class="avance-complete-icon" xmlns="http://www.w3.org/2000
         gantt.render();
 
         if (typeof bubble_fn_completeTask === "function") {
-            _queueBubble("task_complete_" + taskId, bubble_fn_completeTask, {
-                value: Number(taskId)
-            });
+            _queueBubble("task_complete_" + taskId, bubble_fn_completeTask, Number(taskId));
         }
     });
 })();
