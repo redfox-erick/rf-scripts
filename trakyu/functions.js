@@ -165,6 +165,8 @@ gantt.attachEvent("onAfterTaskUpdate", function(id, task) {
 });
 
 var _linkScroll = null;
+var _deletingLink = null;
+
 gantt.attachEvent("onBeforeLinkAdd", function() {
     _linkScroll = saveScrollPosition();
     return true;
@@ -182,15 +184,20 @@ gantt.attachEvent("onAfterLinkUpdate", function(id, link) {
     }
 });
 
-gantt.attachEvent("onBeforeLinkDelete", function() {
+gantt.attachEvent("onBeforeLinkDelete", function(id) {
     _linkScroll = saveScrollPosition();
+    if (gantt.isLinkExists(id)) {
+        var link = gantt.getLink(id);
+        _deletingLink = { source: link.source, target: link.target };
+    }
     return true;
 });
 gantt.attachEvent("onAfterLinkDelete", function(id) {
     restoreScrollPosition(_linkScroll);
-    if (typeof bubble_fn_deleteLink === "function") {
-        _queueBubble("link_delete_" + id, bubble_fn_deleteLink, { output1: id });
+    if (typeof bubble_fn_deleteLink === "function" && _deletingLink) {
+        _queueBubble("link_delete_" + id, bubble_fn_deleteLink, { output1: id, output2: _deletingLink.source, output3: _deletingLink.target });
     }
+    _deletingLink = null;
 });
 
 // --- Dependency conflict feedback ---
