@@ -4,8 +4,8 @@ console.log("[Gantt] init.js loaded");
 // of whether functions.js has loaded yet. functions.js will redefine them — that's fine.
 function isCompleted(task) { return task.progress >= 1; }
 function calcularAvance(task) { return Math.round((task.progress || 0) * 100); }
-// Fix #1: Single plugins() call — auto_scheduling removed from plugins to avoid recalculation
-gantt.plugins({ quick_info: true, tool_tip: true, marker: true, export_api: true, undo: true });
+// Fix #1: Single plugins() call con auto_scheduling habilitado
+gantt.plugins({ quick_info: true, tool_tip: true, marker: true, export_api: true, undo: true, auto_scheduling: true });
 var today = new Date();
 gantt.addMarker({
   start_date: today,
@@ -20,8 +20,8 @@ gantt.config.row_height = 30;
 gantt.config.bar_height = 20;
 gantt.config.date_format = "%Y-%m-%d %H:%i";
 gantt.config.work_time = false;
-// Fix #2: Disable auto_scheduling so DHTMLX respects start_date/end_date from Bubble as-is
-gantt.config.auto_scheduling = false;
+// auto_scheduling habilitado para reprogramación automática por tipo de dependencia
+gantt.config.auto_scheduling = true;
 gantt.config.schedule_from_end = false;
 // --- Column width persistence ---
 var COL_WIDTHS_KEY = "trakyu_col_widths";
@@ -230,12 +230,65 @@ gantt.attachEvent("onBeforeLinkAdd", function(_id, link) {
     var source = gantt.isTaskExists(link.source) ? gantt.getTask(link.source) : null;
     var target = gantt.isTaskExists(link.target) ? gantt.getTask(link.target) : null;
     if ((source && isCompleted(source)) || (target && isCompleted(target))) return false;
-    return link.type === gantt.config.links.finish_to_start;
+    return true;
+});
+gantt.attachEvent("onLinkDblClick", function(id) {
+    if (!gantt.isLinkExists(id)) return false;
+    var link = gantt.getLink(id);
+    var source = gantt.isTaskExists(link.source) ? gantt.getTask(link.source) : null;
+    var target = gantt.isTaskExists(link.target) ? gantt.getTask(link.target) : null;
+    var sourceText = source ? source.text : link.source;
+    var targetText = target ? target.text : link.target;
+    var existing = document.getElementById("gantt-link-editor");
+    if (existing) existing.remove();
+    var overlay = document.createElement("div");
+    overlay.id = "gantt-link-editor";
+    overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:9999;";
+    var box = document.createElement("div");
+    box.style.cssText = "background:#fff;border-radius:8px;padding:24px;width:320px;font-family:sans-serif;";
+    var TIPOS = [
+        { value: "0", label: "Fin a Inicio (FS)" },
+        { value: "1", label: "Inicio a Inicio (SS)" },
+        { value: "2", label: "Fin a Fin (FF)" },
+        { value: "3", label: "Inicio a Fin (SF)" }
+    ];
+    var optionsHtml = TIPOS.map(function(t) {
+        return '<option value="' + t.value + '"' + (String(link.type) === t.value ? ' selected' : '') + '>' + t.label + '</option>';
+    }).join('');
+    box.innerHTML = '<div style="font-size:15px;font-weight:500;margin-bottom:4px;color:#111;">Tipo de dependencia</div>'
+        + '<div style="font-size:12px;color:#666;margin-bottom:16px;">' + sourceText + ' \u2192 ' + targetText + '</div>'
+        + '<select id="gantt-link-type-sel" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;margin-bottom:16px;">' + optionsHtml + '</select>'
+        + '<div style="display:flex;gap:8px;justify-content:flex-end;">'
+        + '<button id="gantt-link-del" style="padding:7px 14px;border:1px solid #f87171;background:#fff;color:#dc2626;border-radius:6px;font-size:13px;cursor:pointer;">Eliminar</button>'
+        + '<button id="gantt-link-cancel" style="padding:7px 14px;border:1px solid #ddd;background:#fff;color:#555;border-radius:6px;font-size:13px;cursor:pointer;">Cancelar</button>'
+        + '<button id="gantt-link-save" style="padding:7px 14px;border:none;background:#2196f3;color:#fff;border-radius:6px;font-size:13px;cursor:pointer;font-weight:500;">Guardar</button>'
+        + '</div>';
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    document.getElementById("gantt-link-save").addEventListener("click", function() {
+        var newType = document.getElementById("gantt-link-type-sel").value;
+        link.type = newType;
+        gantt.updateLink(id);
+        overlay.remove();
+    });
+    document.getElementById("gantt-link-cancel").addEventListener("click", function() {
+        overlay.remove();
+    });
+    document.getElementById("gantt-link-del").addEventListener("click", function() {
+        if (confirm("¿Eliminar esta dependencia?")) {
+            gantt.deleteLink(id);
+            overlay.remove();
+        }
+    });
+    overlay.addEventListener("click", function(e) {
+        if (e.target === overlay) overlay.remove();
+    });
+    return false;
 });
 // Add the license key for dhtmlX Gantt Pro
 gantt.license = "40762312";
-// Fix #3: Disable auto_scheduling and schedule_from_end so end_date from Bubble is never overridden
-gantt.config.auto_scheduling = false;
+// auto_scheduling habilitado — ver nota arriba
+gantt.config.auto_scheduling = true;
 gantt.config.schedule_from_end = false;
 gantt.config.undo = true;
 gantt.config.drag_progress = false; // remove progress drag arrow
