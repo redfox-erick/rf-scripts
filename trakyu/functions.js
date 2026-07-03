@@ -85,39 +85,32 @@ gantt.attachEvent("onAfterTaskUpdate", function(id, item) {
     }
 });
 
-// Reorder Tasks
-gantt.attachEvent("onAfterRowReorder", function(id) {
-    if (typeof bubble_fn_reorderTask !== "function") return;
+// Reorder Tasks — renumera todas las tasks en el orden visual actual del Gantt
+gantt.attachEvent("onRowDragEnd", function(id, target) {
+    if (typeof bubble_fn_sort_order !== "function") return;
 
-    var ordered = [];
-    gantt.eachTask(function(t) { ordered.push(t); });
+    var newOrder = [];
+    var _sortIdx = 0;
+    gantt.eachTask(function(task) {
+        _sortIdx += 10;
+        newOrder.push({ bubble_id: task.bubble_id, newSort: _sortIdx });
+    });
 
-    var pos = -1;
-    for (var i = 0; i < ordered.length; i++) {
-        if (String(ordered[i].id) === String(id)) { pos = i; break; }
-    }
-    if (pos === -1) return;
+    // Filtrar solo las tasks cuyo sort_order cambió
+    var changed = newOrder.filter(function(item) {
+        return (window._sortOrderMap && window._sortOrderMap[item.bubble_id]) !== item.newSort;
+    });
 
-    var prev = pos > 0 ? ordered[pos - 1] : null;
-    var next = pos < ordered.length - 1 ? ordered[pos + 1] : null;
-    var prevIndex = prev && prev.index != null ? prev.index : null;
-    var nextIndex = next && next.index != null ? next.index : null;
+    // Actualizar el mapa local
+    changed.forEach(function(item) {
+        if (window._sortOrderMap) window._sortOrderMap[item.bubble_id] = item.newSort;
+    });
 
-    var newIndex;
-    if (prevIndex !== null && nextIndex !== null) {
-        newIndex = (prevIndex + nextIndex) / 2;
-    } else if (prevIndex !== null) {
-        newIndex = prevIndex + 1;
-    } else if (nextIndex !== null) {
-        newIndex = nextIndex - 1;
-    } else {
-        return;
-    }
-
-    var task = gantt.getTask(id);
-    _queueBubble("task_reorder", bubble_fn_reorderTask, {
-        output1: task.bubble_id,
-        output2: newIndex
+    // Enviar a Bubble con delay para respetar el Queue
+    changed.forEach(function(item, i) {
+        setTimeout(function() {
+            bubble_fn_sort_order(item.bubble_id + "," + item.newSort);
+        }, i * 200);
     });
 });
 
