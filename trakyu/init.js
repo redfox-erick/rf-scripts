@@ -470,6 +470,29 @@ function initGantt() {
     } catch(e) {
         console.error("[Gantt] gantt.parse() FAILED:", e);
     }
+    // Asignar sort_order en orden jerárquico exacto del Gantt (solo si está vacío)
+    // Polling: espera hasta que bubble_fn_sort_order esté disponible (máx 10s)
+    // Las llamadas se espacian 200ms para respetar el Queue de Bubble
+    (function _waitAndAssignSortOrder(attempts) {
+        if (typeof bubble_fn_sort_order === "function") {
+            var _sortIdx = 0;
+            var pending = [];
+            gantt.eachTask(function(task) {
+                _sortIdx += 10;
+                if (!task.sort_order) {
+                    task._tmpSortIdx = _sortIdx;
+                    pending.push(task);
+                }
+            });
+            pending.forEach(function(task, i) {
+                setTimeout(function() {
+                    bubble_fn_sort_order(task.bubble_id + "," + task._tmpSortIdx);
+                }, i * 200);
+            });
+        } else if (attempts > 0) {
+            setTimeout(function() { _waitAndAssignSortOrder(attempts - 1); }, 500);
+        }
+    })(20);
     restoreOpenTasks();
     if (typeof restorePersistedScroll === "function") restorePersistedScroll();
     if (typeof initSCurve === "function") initSCurve();
