@@ -35,6 +35,8 @@ window.initSCurve = function() {
         var scale = gantt.getScale();
         var step = scale.unit;
         var timegrid = {};
+        // End timestamp of the period that contains today (last point of the Real line)
+        var todayTs = gantt.date.add(gantt.date[step + "_start"](new Date(today)), 1, step).valueOf();
 
         gantt.eachTask(function(task) {
             if (gantt.hasChild(task.id) || !task.duration) return;
@@ -52,7 +54,33 @@ window.initSCurve = function() {
                 var overlapEnd   = currDate    < task.end_date   ? currDate    : task.end_date;
                 var daysInPeriod = Math.max(0, (overlapEnd - overlapStart) / 86400000);
                 timegrid[ts].planned += daysInPeriod;
-                if (date <= today) timegrid[ts].real += daysInPeriod * (task.progress || 0);
+            }
+
+            // Real: spread the work done (progress x total days) over the elapsed span only,
+            // so the total at today equals the Gantt "Avance" column (sum of days x progress).
+            var progress = task.progress || 0;
+            if (progress <= 0) return;
+            var workDone = progress * (task.end_date - task.start_date) / 86400000;
+            var elapsedEnd = task.end_date < today ? task.end_date : today;
+
+            if (task.start_date >= elapsedEnd) {
+                // Not started yet but already has progress: count it in the current period
+                if (!timegrid[todayTs]) timegrid[todayTs] = { planned: 0, real: 0 };
+                timegrid[todayTs].real += workDone;
+                return;
+            }
+
+            var elapsedDays = (elapsedEnd - task.start_date) / 86400000;
+            var realDate = gantt.date[step + "_start"](new Date(task.start_date));
+            while (realDate < elapsedEnd) {
+                var realStart = realDate;
+                realDate = gantt.date.add(realDate, 1, step);
+                var realTs = realDate.valueOf();
+                if (!timegrid[realTs]) timegrid[realTs] = { planned: 0, real: 0 };
+                var rStart = realStart > task.start_date ? realStart : task.start_date;
+                var rEnd   = realDate  < elapsedEnd      ? realDate  : elapsedEnd;
+                var elapsedInPeriod = Math.max(0, (rEnd - rStart) / 86400000);
+                timegrid[realTs].real += workDone * elapsedInPeriod / elapsedDays;
             }
         });
 
@@ -66,7 +94,7 @@ window.initSCurve = function() {
             totalPlanned += cell.planned;
             cumulativePlanned.push(totalPlanned);
 
-            if (chartScale[i] <= today) {
+            if (chartScale[i].valueOf() <= todayTs) {
                 totalReal += (cell.real || 0);
                 cumulativeReal.push(totalReal);
                 cumulativePredicted.push(null);
