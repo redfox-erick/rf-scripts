@@ -116,7 +116,7 @@ window.initSCurve = function() {
                 if (cumulativeReal[j] !== undefined)
                     cumulativeReal[j] = Math.round(cumulativeReal[j] / totalPlanned * 100);
                 if (cumulativePredicted[j] !== null && cumulativePredicted[j] !== undefined)
-                    cumulativePredicted[j] = Math.round(cumulativePredicted[j] / totalPlanned * 100);
+                    cumulativePredicted[j] = Math.min(100, Math.round(cumulativePredicted[j] / totalPlanned * 100));
             }
         }
 
