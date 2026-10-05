@@ -98,7 +98,7 @@ Repeated drags, resizes, or quick edits fire multiple `bubble_fn_updateTask` cal
 
 5. **Fullscreen** — native browser `requestFullscreen` / `exitFullscreen`. Button label toggles; `gantt.render()` called on `fullscreenchange`.
 
-6. **S-curve overlay** — `scurve.js` uses DHTMLX overlay plugin + Chart.js 2.7.3. Shows Planned, Actual, Projected lines. Gantt bars fade to 40% opacity when active.
+6. **S-curve overlay** — `scurve.js` uses DHTMLX overlay plugin + Chart.js 2.7.3. Shows Baseline, Planned, Actual, Projected lines. Gantt bars fade to 40% opacity when active. **Actual** spreads each leaf's `progress × days` over its *elapsed* span (start → today) so the value at today equals the Gantt "Avance" column (leaf, duration-weighted); the period containing today is the last Actual point. **Projected** is capped at 100%.
 
 7. **Column show/hide** — toolbar dropdown with checkboxes. `text` always visible; toggleable: `start_date`, `end_date`, `duration`, `avance`, `add`. State persisted in localStorage under `trakyu_col_visibility`.
 
