@@ -130,6 +130,7 @@ Cambios rápidos del usuario (drag repetido, resize) generan múltiples llamadas
    - Botón toggle apilado debajo del botón fullscreen, se pone verde cuando está activo.
    - Barras del Gantt se atenúan al 40% de opacidad cuando el overlay está visible.
    - `initSCurve()` es llamado desde `initGantt()` en init.js tras `gantt.parse()`.
+   - Ajuste (oct 2026): la línea Real reparte `progress × días` de cada tarea hoja sobre el tramo transcurrido (inicio → hoy), no sobre toda su duración. Así el valor de hoy coincide con la columna Avance del Gantt (antes mostraba 42% vs 65%, porque se perdía el avance de tareas adelantadas). El período que contiene hoy es el último punto de Real y Proyectado se limita a 100%.
 
 5. **Pantalla completa** ✅:
    - Botón flotante inyectado en `#gantt_here` tras `gantt.init()`.
